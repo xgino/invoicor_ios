@@ -1,0 +1,12 @@
+//
+//  Dev.xcconfig
+//  invoicor
+//
+//  Created by Gin on 01/04/2026.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+
+BASE_URL = http:/$()/127.0.0.1:8000/api
