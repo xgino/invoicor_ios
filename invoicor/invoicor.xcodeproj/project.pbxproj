@@ -6,25 +6,53 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		33028E972F8060A500DFAF54 /* InvoicorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33028E962F8060A500DFAF54 /* InvoicorApp.swift */; };
+		33028E992F8060BA00DFAF54 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33028E982F8060B900DFAF54 /* RootView.swift */; };
+		33028F112F8068A700DFAF54 /* BuildPlan.md in Resources */ = {isa = PBXBuildFile; fileRef = 33028F102F8068A700DFAF54 /* BuildPlan.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		33028E962F8060A500DFAF54 /* InvoicorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicorApp.swift; sourceTree = "<group>"; };
+		33028E982F8060B900DFAF54 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		33028F102F8068A700DFAF54 /* BuildPlan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BuildPlan.md; sourceTree = "<group>"; };
 		3355A62A2F7D684500945AED /* invoicor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = invoicor.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		3355A6452F7D785200945AED /* invoicor-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "invoicor-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3355A62C2F7D684500945AED /* app */ = {
+		33028EBE2F80620200DFAF54 /* Resources */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = app;
+			path = Resources;
 			sourceTree = "<group>";
 		};
-		3355A6392F7D717400945AED /* core */ = {
+		33028F1E2F806B3A00DFAF54 /* Pages */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = core;
+			path = Pages;
 			sourceTree = "<group>";
 		};
-		3355A63B2F7D718800945AED /* features */ = {
+		33028F2D2F806BB700DFAF54 /* Components */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = features;
+			path = Components;
+			sourceTree = "<group>";
+		};
+		33028F382F806C2200DFAF54 /* InvoicorTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = InvoicorTests;
+			sourceTree = "<group>";
+		};
+		33028F392F806C3400DFAF54 /* InvoicorUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = InvoicorUITests;
+			sourceTree = "<group>";
+		};
+		3355A62C2F7D684500945AED /* Config */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Config;
+			sourceTree = "<group>";
+		};
+		3355A6392F7D717400945AED /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -43,11 +71,17 @@
 		3355A6212F7D684500945AED = {
 			isa = PBXGroup;
 			children = (
-				3355A6452F7D785200945AED /* invoicor-Info.plist */,
-				3355A62C2F7D684500945AED /* app */,
+				33028F392F806C3400DFAF54 /* InvoicorUITests */,
+				33028F382F806C2200DFAF54 /* InvoicorTests */,
+				33028F2D2F806BB700DFAF54 /* Components */,
+				33028EBE2F80620200DFAF54 /* Resources */,
+				3355A62C2F7D684500945AED /* Config */,
 				3355A62B2F7D684500945AED /* Products */,
-				3355A6392F7D717400945AED /* core */,
-				3355A63B2F7D718800945AED /* features */,
+				3355A6392F7D717400945AED /* Core */,
+				33028F102F8068A700DFAF54 /* BuildPlan.md */,
+				33028F1E2F806B3A00DFAF54 /* Pages */,
+				33028E962F8060A500DFAF54 /* InvoicorApp.swift */,
+				33028E982F8060B900DFAF54 /* RootView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -75,9 +109,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3355A62C2F7D684500945AED /* app */,
-				3355A6392F7D717400945AED /* core */,
-				3355A63B2F7D718800945AED /* features */,
+				33028EBE2F80620200DFAF54 /* Resources */,
+				33028F1E2F806B3A00DFAF54 /* Pages */,
+				33028F2D2F806BB700DFAF54 /* Components */,
+				33028F382F806C2200DFAF54 /* InvoicorTests */,
+				33028F392F806C3400DFAF54 /* InvoicorUITests */,
+				3355A62C2F7D684500945AED /* Config */,
+				3355A6392F7D717400945AED /* Core */,
 			);
 			name = invoicor;
 			packageProductDependencies = (
@@ -125,6 +163,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				33028F112F8068A700DFAF54 /* BuildPlan.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,6 +174,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				33028E972F8060A500DFAF54 /* InvoicorApp.swift in Sources */,
+				33028E992F8060BA00DFAF54 /* RootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -143,7 +184,7 @@
 /* Begin XCBuildConfiguration section */
 		3355A6332F7D684700945AED /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = 3355A62C2F7D684500945AED /* app */;
+			baseConfigurationReferenceAnchor = 3355A62C2F7D684500945AED /* Config */;
 			baseConfigurationReferenceRelativePath = Dev.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -209,7 +250,7 @@
 		};
 		3355A6342F7D684700945AED /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReferenceAnchor = 3355A62C2F7D684500945AED /* app */;
+			baseConfigurationReferenceAnchor = 3355A62C2F7D684500945AED /* Config */;
 			baseConfigurationReferenceRelativePath = Prod.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
