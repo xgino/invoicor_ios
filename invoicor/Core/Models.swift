@@ -182,7 +182,7 @@ let items: [InvoiceItem]
 let createdAt: String
 let updatedAt: String
 var id: String { publicId }
-
+    
 /// Extract client name from the frozen snapshot
 var clientName: String {
     let company = clientSnapshot["company_name"]?.stringValue ?? ""
@@ -202,6 +202,15 @@ let unitPrice: String
 let amount: String
 let sortOrder: Int
 var id: String { publicId }
+}
+// MARK: - Product (Saved Items)
+struct Product: Codable, Identifiable {
+    let publicId: String
+    let name: String
+    let description: String
+    let defaultPrice: String
+    let createdAt: String
+    var id: String { publicId }
 }
 // MARK: - Templates
 struct InvoiceTemplate: Codable, Identifiable {

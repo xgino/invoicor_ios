@@ -1,8 +1,7 @@
-// This file MUST be at: invoicor/InvoicorApp.swift
-// NOT at: invoicor/Config/InvoicorApp.swift
-//
-// In Xcode sidebar: drag it out of the Config group to the top level.
+// InvoicorApp.swift
+// App entry point — just boots RootView.
 import SwiftUI
+
 @main
 struct InvoicorApp: App {
     var body: some Scene {
@@ -11,4 +10,3 @@ struct InvoicorApp: App {
         }
     }
 }
-//

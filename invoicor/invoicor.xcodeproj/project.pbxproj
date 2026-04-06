@@ -25,24 +25,14 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		33028F1E2F806B3A00DFAF54 /* Pages */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Pages;
-			sourceTree = "<group>";
-		};
 		33028F2D2F806BB700DFAF54 /* Components */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Components;
 			sourceTree = "<group>";
 		};
-		33028F382F806C2200DFAF54 /* InvoicorTests */ = {
+		33028F5C2F816BFA00DFAF54 /* Screens */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = InvoicorTests;
-			sourceTree = "<group>";
-		};
-		33028F392F806C3400DFAF54 /* InvoicorUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = InvoicorUITests;
+			path = Screens;
 			sourceTree = "<group>";
 		};
 		3355A62C2F7D684500945AED /* Config */ = {
@@ -71,17 +61,15 @@
 		3355A6212F7D684500945AED = {
 			isa = PBXGroup;
 			children = (
-				33028F392F806C3400DFAF54 /* InvoicorUITests */,
-				33028F382F806C2200DFAF54 /* InvoicorTests */,
 				33028F2D2F806BB700DFAF54 /* Components */,
 				33028EBE2F80620200DFAF54 /* Resources */,
 				3355A62C2F7D684500945AED /* Config */,
 				3355A62B2F7D684500945AED /* Products */,
 				3355A6392F7D717400945AED /* Core */,
 				33028F102F8068A700DFAF54 /* BuildPlan.md */,
-				33028F1E2F806B3A00DFAF54 /* Pages */,
 				33028E962F8060A500DFAF54 /* InvoicorApp.swift */,
 				33028E982F8060B900DFAF54 /* RootView.swift */,
+				33028F5C2F816BFA00DFAF54 /* Screens */,
 			);
 			sourceTree = "<group>";
 		};
@@ -110,10 +98,8 @@
 			);
 			fileSystemSynchronizedGroups = (
 				33028EBE2F80620200DFAF54 /* Resources */,
-				33028F1E2F806B3A00DFAF54 /* Pages */,
 				33028F2D2F806BB700DFAF54 /* Components */,
-				33028F382F806C2200DFAF54 /* InvoicorTests */,
-				33028F392F806C3400DFAF54 /* InvoicorUITests */,
+				33028F5C2F816BFA00DFAF54 /* Screens */,
 				3355A62C2F7D684500945AED /* Config */,
 				3355A6392F7D717400945AED /* Core */,
 			);
@@ -320,9 +306,9 @@
 				INFOPLIST_FILE = "invoicor-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -353,9 +339,9 @@
 				INFOPLIST_FILE = "invoicor-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
