@@ -13,7 +13,7 @@
 		338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 338A2AF52F86A3A500745D25 /* RevenueCat */; };
 		338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 338A2AF72F86A3A500745D25 /* RevenueCatUI */; };
 		338A2B032F88EC4F00745D25 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B022F88EC4F00745D25 /* Products.storekit */; };
-		338A2B072F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */; };
+		338A2B092F88F01E00745D25 /* SubscriptionKey_22F4BA53.h8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,7 +22,7 @@
 		33028F102F8068A700DFAF54 /* BuildPlan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BuildPlan.md; sourceTree = "<group>"; };
 		3355A62A2F7D684500945AED /* invoicor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = invoicor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		338A2B022F88EC4F00745D25 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
-		338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */ = {isa = PBXFileReference; lastKnownFileType = text; path = SubscriptionKey_D1C9AB18.p8; sourceTree = "<group>"; };
+		338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */ = {isa = PBXFileReference; lastKnownFileType = text; path = SubscriptionKey_22F4BA53.h8; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -69,7 +69,6 @@
 		3355A6212F7D684500945AED = {
 			isa = PBXGroup;
 			children = (
-				338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */,
 				338A2B022F88EC4F00745D25 /* Products.storekit */,
 				33028F2D2F806BB700DFAF54 /* Components */,
 				33028EBE2F80620200DFAF54 /* Resources */,
@@ -81,6 +80,7 @@
 				33028E982F8060B900DFAF54 /* RootView.swift */,
 				33028F5C2F816BFA00DFAF54 /* Screens */,
 				338A2AF32F86A2FB00745D25 /* Frameworks */,
+				338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */,
 			);
 			sourceTree = "<group>";
 		};
@@ -172,8 +172,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				338A2B092F88F01E00745D25 /* SubscriptionKey_22F4BA53.h8 in Resources */,
 				338A2B032F88EC4F00745D25 /* Products.storekit in Resources */,
-				338A2B072F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 in Resources */,
 				33028F112F8068A700DFAF54 /* BuildPlan.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
