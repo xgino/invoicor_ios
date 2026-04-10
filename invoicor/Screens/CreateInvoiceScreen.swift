@@ -3,6 +3,7 @@
 // Template comes from business profile defaults — not selectable here.
 // Tracks saved state to prevent double-creation.
 import SwiftUI
+import RevenueCatUI
 
 // Local item model (lives in form state until saved to API)
 struct LocalItem: Identifiable {
@@ -183,7 +184,7 @@ struct CreateInvoiceScreen: View {
                 }
             }
             .sheet(isPresented: $showPaywall) {
-                PaywallScreen()
+                PaywallView(displayCloseButton: true)
             }
         }
     }

@@ -1,0 +1,163 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "0B95CA16",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6761840276",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "S8CK7BL3P8",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 797502546.46686494,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "22021773",
+      "localizations" : [
+
+      ],
+      "name" : "Plans",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "7.99",
+          "familyShareable" : false,
+          "groupNumber" : 3,
+          "internalID" : "6761844046",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Einsteiger-Monat",
+              "displayName" : "Einsteiger-Monat",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro Monthly",
+          "subscriptionGroupID" : "22021773",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "79.99",
+          "familyShareable" : false,
+          "groupNumber" : 4,
+          "internalID" : "6761843007",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Einsteiger-Monat",
+              "displayName" : "Einsteiger-Monat",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro Yearly",
+          "subscriptionGroupID" : "22021773",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6761843536",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Einsteiger-Monat",
+              "displayName" : "Einsteiger-Monat",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "starter_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Starter Monthly",
+          "subscriptionGroupID" : "22021773",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "49.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6761843543",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Einsteiger-Monat",
+              "displayName" : "Einsteiger-Monat",
+              "locale" : "de"
+            }
+          ],
+          "productID" : "starter_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Starter Yearly",
+          "subscriptionGroupID" : "22021773",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

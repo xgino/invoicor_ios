@@ -12,20 +12,24 @@ import Foundation
 enum AppConfig {
     static var apiBaseURL: String {
         #if DEBUG
-            // Simulator / development: your local Django server
-            return "http://localhost:8000/api"
+        // return "http://localhost:8000/api"
+        return "https://invoicor.com/api"
         #else
-            // App Store / TestFlight: your production server
-            return "https://api.invoicor.com/api"
+        return "https://invoicor.com/api"
         #endif
     }
-    
+
+    static var revenueCatAPIKey: String {
+        // This is a PUBLIC api key — safe to embed in client code
+        // Find it: RevenueCat dashboard → Project Settings → API Keys
+        return "appl_LjyOfPrcxhqTgDvadATfkQGfsDw"
+    }
+
     static var isDebug: Bool {
         #if DEBUG
-            return true
+        return true
         #else
-            return false
+        return false
         #endif
     }
 }
-//

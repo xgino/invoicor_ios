@@ -4,6 +4,8 @@
 // Multi-business switcher for Pro/Business tier.
 import SwiftUI
 import Charts
+import RevenueCat
+import RevenueCatUI
 
 struct HomeScreen: View {
     var auth = AuthManager.shared

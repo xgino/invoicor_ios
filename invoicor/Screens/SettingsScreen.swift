@@ -2,6 +2,7 @@
 // Tab 5: Settings — account, subscription, support, legal, danger zone.
 // No more stubs — this is the final version.
 import SwiftUI
+import RevenueCatUI
 
 struct SettingsScreen: View {
     var auth = AuthManager.shared
@@ -188,7 +189,7 @@ struct SettingsScreen: View {
             Text("This permanently deletes your account and all invoices. This cannot be undone.")
         }
         .sheet(isPresented: $showPaywall) {
-            PaywallScreen()
+            PaywallView(displayCloseButton: true)
         }
     }
 

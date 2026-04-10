@@ -10,6 +10,10 @@
 		33028E972F8060A500DFAF54 /* InvoicorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33028E962F8060A500DFAF54 /* InvoicorApp.swift */; };
 		33028E992F8060BA00DFAF54 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33028E982F8060B900DFAF54 /* RootView.swift */; };
 		33028F112F8068A700DFAF54 /* BuildPlan.md in Resources */ = {isa = PBXBuildFile; fileRef = 33028F102F8068A700DFAF54 /* BuildPlan.md */; };
+		338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 338A2AF52F86A3A500745D25 /* RevenueCat */; };
+		338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 338A2AF72F86A3A500745D25 /* RevenueCatUI */; };
+		338A2B032F88EC4F00745D25 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B022F88EC4F00745D25 /* Products.storekit */; };
+		338A2B072F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +21,8 @@
 		33028E982F8060B900DFAF54 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		33028F102F8068A700DFAF54 /* BuildPlan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BuildPlan.md; sourceTree = "<group>"; };
 		3355A62A2F7D684500945AED /* invoicor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = invoicor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		338A2B022F88EC4F00745D25 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */ = {isa = PBXFileReference; lastKnownFileType = text; path = SubscriptionKey_D1C9AB18.p8; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +58,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */,
+				338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -61,6 +69,8 @@
 		3355A6212F7D684500945AED = {
 			isa = PBXGroup;
 			children = (
+				338A2B062F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 */,
+				338A2B022F88EC4F00745D25 /* Products.storekit */,
 				33028F2D2F806BB700DFAF54 /* Components */,
 				33028EBE2F80620200DFAF54 /* Resources */,
 				3355A62C2F7D684500945AED /* Config */,
@@ -70,6 +80,7 @@
 				33028E962F8060A500DFAF54 /* InvoicorApp.swift */,
 				33028E982F8060B900DFAF54 /* RootView.swift */,
 				33028F5C2F816BFA00DFAF54 /* Screens */,
+				338A2AF32F86A2FB00745D25 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -79,6 +90,13 @@
 				3355A62A2F7D684500945AED /* invoicor.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		338A2AF32F86A2FB00745D25 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -105,6 +123,8 @@
 			);
 			name = invoicor;
 			packageProductDependencies = (
+				338A2AF52F86A3A500745D25 /* RevenueCat */,
+				338A2AF72F86A3A500745D25 /* RevenueCatUI */,
 			);
 			productName = invoicor;
 			productReference = 3355A62A2F7D684500945AED /* invoicor.app */;
@@ -134,6 +154,9 @@
 			);
 			mainGroup = 3355A6212F7D684500945AED;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3355A62B2F7D684500945AED /* Products */;
 			projectDirPath = "";
@@ -149,6 +172,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				338A2B032F88EC4F00745D25 /* Products.storekit in Resources */,
+				338A2B072F88ED8100745D25 /* SubscriptionKey_D1C9AB18.p8 in Resources */,
 				33028F112F8068A700DFAF54 /* BuildPlan.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -381,6 +406,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.67.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		338A2AF52F86A3A500745D25 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCat;
+		};
+		338A2AF72F86A3A500745D25 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 3355A6222F7D684500945AED /* Project object */;
 }
