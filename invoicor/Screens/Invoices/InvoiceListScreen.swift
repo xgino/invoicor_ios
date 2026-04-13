@@ -1,6 +1,7 @@
 // Screens/InvoiceListScreen.swift
 // Tab 2: All invoices with search + status filter.
-// Tap any invoice → push to InvoiceDetailScreen.
+// Uses InvoiceListResponse (paginated) from API.
+
 import SwiftUI
 
 struct InvoiceListScreen: View {
@@ -14,13 +15,9 @@ struct InvoiceListScreen: View {
 
     private var filteredInvoices: [Invoice] {
         var result = invoices
-
-        // Status filter
         if selectedFilter != "all" {
             result = result.filter { $0.status.lowercased() == selectedFilter }
         }
-
-        // Search filter
         if !searchText.isEmpty {
             let q = searchText.lowercased()
             result = result.filter {
@@ -29,53 +26,39 @@ struct InvoiceListScreen: View {
                 $0.total.contains(q)
             }
         }
-
         return result
     }
 
-    // Group invoices by month
     private var groupedInvoices: [(String, [Invoice])] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let displayFormatter = DateFormatter()
-        displayFormatter.dateFormat = "MMMM yyyy"
+        let parser = DateFormatter()
+        parser.dateFormat = "yyyy-MM-dd"
+        let display = DateFormatter()
+        display.dateFormat = "MMMM yyyy"
 
         var groups: [String: [Invoice]] = [:]
         var order: [String] = []
 
         for invoice in filteredInvoices {
-            let key: String
-            if let date = formatter.date(from: invoice.issueDate) {
-                key = displayFormatter.string(from: date)
-            } else {
-                key = "Other"
-            }
-            if groups[key] == nil {
-                order.append(key)
-            }
+            let key = parser.date(from: invoice.issueDate).map { display.string(from: $0) } ?? "Other"
+            if groups[key] == nil { order.append(key) }
             groups[key, default: []].append(invoice)
         }
-
         return order.map { ($0, groups[$0]!) }
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search bar
+            // Search
             HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                TextField("Search invoices...", text: $searchText)
-                    .autocorrectionDisabled()
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField("Search invoices…", text: $searchText).autocorrectionDisabled()
             }
-            .padding(10)
+            .padding(.horizontal, 12).padding(.vertical, 10)
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 8))
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.horizontal, 16).padding(.top, 8)
 
-            // Status filter
+            // Status filter pills
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(filters, id: \.self) { filter in
@@ -83,32 +66,22 @@ struct InvoiceListScreen: View {
                             selectedFilter = filter
                         } label: {
                             Text(filter.capitalized)
-                                .font(.subheadline)
-                                .fontWeight(selectedFilter == filter ? .semibold : .regular)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 7)
-                                .background(
-                                    selectedFilter == filter
-                                        ? Color.blue.opacity(0.15)
-                                        : Color(.systemGray6)
-                                )
-                                .foregroundStyle(
-                                    selectedFilter == filter ? .blue : .primary
-                                )
+                                .font(.subheadline.weight(selectedFilter == filter ? .semibold : .regular))
+                                .padding(.horizontal, 14).padding(.vertical, 7)
+                                .background(selectedFilter == filter ? Color.blue.opacity(0.1) : Color(.systemGray6))
+                                .foregroundStyle(selectedFilter == filter ? .blue : .primary)
                                 .clipShape(Capsule())
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 16).padding(.vertical, 8)
             }
 
             Divider()
 
-            // Invoice list
+            // List
             if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if filteredInvoices.isEmpty {
                 EmptyState(
                     icon: "doc.text",
@@ -136,31 +109,26 @@ struct InvoiceListScreen: View {
             }
         }
         .navigationTitle("Invoices")
-        .task { loadInvoices() }
-        .refreshable { loadInvoices() }
+        .task { await loadInvoices() }
+        .refreshable { await loadInvoices() }
     }
 
-    // MARK: - Load
+    // MARK: - Load (paginated response)
 
-    private func loadInvoices() {
+    private func loadInvoices() async {
         isLoading = invoices.isEmpty
-        errorMessage = ""
-        Task {
-            do {
-                let fetched = try await APIClient.shared.request(
-                    [Invoice].self,
-                    method: "GET",
-                    path: "/invoices/"
-                )
-                await MainActor.run {
-                    invoices = fetched
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to load"
-                    isLoading = false
-                }
+        do {
+            let response = try await APIClient.shared.request(
+                InvoiceListResponse.self, method: "GET", path: "/invoices/"
+            )
+            await MainActor.run {
+                invoices = response.results
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = (error as? APIError)?.errorDescription ?? "Failed to load"
+                isLoading = false
             }
         }
     }

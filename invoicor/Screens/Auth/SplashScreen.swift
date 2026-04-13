@@ -1,6 +1,7 @@
-// Screens/SplashScreen.swift
+// Screens/Auth/SplashScreen.swift
 // Animated splash with gradient background, floating particles,
-// logo scale + fade animation. Modern and pretty.
+// app logo scale + fade animation.
+
 import SwiftUI
 
 struct SplashScreen: View {
@@ -59,26 +60,32 @@ struct SplashScreen: View {
                         .scaleEffect(logoScale * 1.2)
                         .opacity(logoOpacity * 0.6)
 
-                    // Icon container
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.blue,
-                                        Color.blue.opacity(0.8),
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 80, height: 80)
-                            .shadow(color: .blue.opacity(0.4), radius: 20, y: 8)
-
-                        Image(systemName: "doc.text.fill")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.white)
+                    // App logo
+                    Group {
+                        if UIImage(named: "AppLogo") != nil {
+                            Image("AppLogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 18)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.blue, .blue.opacity(0.8)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 80, height: 80)
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 36))
+                                    .foregroundStyle(.white)
+                            }
+                        }
                     }
+                    .shadow(color: .blue.opacity(0.4), radius: 20, y: 8)
                 }
                 .scaleEffect(logoScale)
                 .opacity(logoOpacity)
@@ -97,29 +104,20 @@ struct SplashScreen: View {
             }
         }
         .onAppear {
-            // Gradient animation
             withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
                 gradientStart = .bottomTrailing
                 gradientEnd = .topLeading
             }
-
-            // Particle drift
             withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
                 particleOffset = 1
             }
-
-            // Logo entrance
             withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
                 logoScale = 1.0
                 logoOpacity = 1.0
             }
-
-            // Text fade in
             withAnimation(.easeOut(duration: 0.6).delay(0.3)) {
                 textOpacity = 1.0
             }
-
-            // Transition out
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 onFinished()
             }

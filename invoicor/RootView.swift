@@ -24,6 +24,30 @@ struct RootView: View {
                 case .authenticated:
                     MainTabView()
                         .transition(.opacity)
+                case .error(let message):
+                    VStack(spacing: 20) {
+                        Image(systemName: "wifi.exclamationmark")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                        Text("Connection Issue")
+                            .font(.title2.bold())
+                        Text(message)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                        Button {
+                            Task { await auth.checkSession() }
+                        } label: {
+                            Text("Try Again")
+                                .font(.headline)
+                                .frame(maxWidth: 200)
+                                .padding(.vertical, 12)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
                 }
             }
         }
@@ -51,8 +75,8 @@ struct MainTabView: View {
                 .tabItem { Image(systemName: "plus.circle.fill"); Text("Create") }
                 .tag(2)
 
-            NavigationStack { ClientListScreen() }
-                .tabItem { Image(systemName: "person.2.fill"); Text("Clients") }
+            NavigationStack { LibraryScreen() }
+                .tabItem { Image(systemName: "folder.fill"); Text("Library") }
                 .tag(3)
 
             NavigationStack { SettingsScreen() }
