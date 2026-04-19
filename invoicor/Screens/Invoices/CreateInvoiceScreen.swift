@@ -5,9 +5,6 @@
 //   1. Create:    CreateInvoiceScreen(isPresented: $show)
 //   2. Edit:      CreateInvoiceScreen(isPresented: $show, editInvoice: invoice)
 //   3. Duplicate: CreateInvoiceScreen(isPresented: $show, duplicateFrom: invoice)
-//
-// Edit mode: saves via PUT to existing invoice. Only allowed for drafts.
-// Duplicate mode: saves via POST as a new invoice. Gets a new invoice number.
 
 import SwiftUI
 import RevenueCatUI
@@ -26,9 +23,7 @@ let maxInvoiceItems = 7
 struct CreateInvoiceScreen: View {
     @Binding var isPresented: Bool
 
-    /// Pass an existing invoice to edit it (draft only).
     var editInvoice: Invoice? = nil
-    /// Pass an existing invoice to duplicate it (creates new).
     var duplicateFrom: Invoice? = nil
 
     private var mode: FormMode {
@@ -73,6 +68,10 @@ struct CreateInvoiceScreen: View {
     @State private var discountValue = ""
     @State private var notes = ""
 
+    // Business profile
+    @State private var businessProfiles: [BusinessProfile] = []
+    @State private var selectedProfileId: String = ""
+
     @State private var currencies: [Currency] = []
     @State private var languages: [Language] = []
     @State private var clients: [Client] = []
@@ -113,6 +112,9 @@ struct CreateInvoiceScreen: View {
         currencies.first(where: { $0.code == currency })?.symbol ?? currency
     }
     private var isFormValid: Bool { selectedClient != nil && !items.isEmpty }
+    private var selectedProfile: BusinessProfile? {
+        businessProfiles.first(where: { $0.publicId == selectedProfileId })
+    }
 
     // MARK: - Body
 
@@ -122,7 +124,6 @@ struct CreateInvoiceScreen: View {
                 if isLoading {
                     ProgressView("Loading…").frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if needsBusinessProfile {
-                    // Business profile not set up — prompt user
                     VStack(spacing: 20) {
                         Spacer()
                         Image(systemName: "building.2")
@@ -146,11 +147,15 @@ struct CreateInvoiceScreen: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
-                            // Mode indicator for edit/duplicate
                             if mode == .edit, let inv = editInvoice {
                                 modeIndicator(icon: "pencil.circle", text: "Editing \(inv.invoiceNumber)", color: .blue)
                             } else if mode == .duplicate, let inv = duplicateFrom {
                                 modeIndicator(icon: "doc.on.doc", text: "Duplicating from \(inv.invoiceNumber)", color: .purple)
+                            }
+
+                            // Business profile picker (only when multiple profiles exist)
+                            if businessProfiles.count > 1 {
+                                businessProfileSection
                             }
 
                             clientSection
@@ -165,7 +170,6 @@ struct CreateInvoiceScreen: View {
                         .padding(.bottom, 100)
                     }
 
-                    // Sticky bottom
                     VStack {
                         Spacer()
                         VStack(spacing: 8) {
@@ -183,7 +187,7 @@ struct CreateInvoiceScreen: View {
                         }
                         .background(Rectangle().fill(.ultraThinMaterial).ignoresSafeArea(.all, edges: .bottom))
                     }
-                } // end else (form content)
+                }
             }
             .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -193,8 +197,8 @@ struct CreateInvoiceScreen: View {
                 }
                 if mode == .create || mode == .duplicate {
                     ToolbarItem(placement: .confirmationAction) {
-                        Button("Save Draft") { saveDraft() }
-                            .disabled(isSaving || !isFormValid)
+                        Button(isFormValid ? "Save" : "Save Draft") { saveDraft() }
+                            .disabled(isSaving)
                     }
                 }
             }
@@ -212,7 +216,6 @@ struct CreateInvoiceScreen: View {
             }
             .fullScreenCover(isPresented: $showPaywall) { PaywallScreen() }
             .fullScreenCover(isPresented: $showBusinessProfile, onDismiss: {
-                // Reload data after business profile setup
                 Task { await loadFormData() }
             }) {
                 NavigationStack { BusinessProfileScreen() }
@@ -231,6 +234,46 @@ struct CreateInvoiceScreen: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    // MARK: - Business Profile Picker
+
+    private var businessProfileSection: some View {
+        FormSection(title: "Business Profile") {
+            FormPicker(
+                label: "Send From",
+                displayText: selectedProfile?.displayName ?? "Select profile",
+                items: businessProfiles,
+                itemLabel: { profile in
+                    let suffix = profile.isDefault ? " (Default)" : ""
+                    return (profile.displayName) + suffix
+                },
+                isSelected: { $0.publicId == selectedProfileId },
+                onSelect: { profile in
+                    selectedProfileId = profile.publicId
+                    applyProfileDefaults(profile)
+                }
+            )
+        }
+    }
+
+    /// When user switches business profile, update the form defaults
+    private func applyProfileDefaults(_ profile: BusinessProfile) {
+        // Only update defaults if in create/duplicate mode and fields haven't been manually changed
+        if mode != .edit {
+            templateSlug = profile.defaultTemplate
+            currency = profile.defaultCurrency
+            language = profile.defaultLanguage
+            if taxRate.isEmpty || taxRate == "0" {
+                taxRate = profile.defaultTaxRate
+            }
+            if paymentTerms.isEmpty {
+                paymentTerms = profile.defaultPaymentTerms
+            }
+            dueDate = Calendar.current.date(
+                byAdding: .day, value: profile.defaultDueDays, to: issueDate
+            ) ?? dueDate
+        }
     }
 
     // MARK: - Client Section
@@ -255,6 +298,7 @@ struct CreateInvoiceScreen: View {
                 .background(Color(.systemBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(.systemGray4), lineWidth: 0.5))
+                .contentShape(Rectangle())
             }
         }
     }
@@ -298,7 +342,7 @@ struct CreateInvoiceScreen: View {
                             if !item.description.isEmpty {
                                 Text(item.description).font(.caption).foregroundStyle(.secondary).lineLimit(1)
                             }
-                            Text("\(formatQty(item.quantity)) × \(currencySymbol)\(formatPrice(item.unitPrice))")
+                            Text("\(formatQty(item.quantity)) x \(currencySymbol)\(formatPrice(item.unitPrice))")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -411,10 +455,9 @@ struct CreateInvoiceScreen: View {
             let (c, l, cl, p) = try await (cReq, lReq, clReq, pReq)
 
             await MainActor.run {
-                currencies = c; languages = l; clients = cl
+                currencies = c; languages = l; clients = cl; businessProfiles = p
 
                 if let source = sourceInvoice {
-                    // Edit or Duplicate: prefill from existing invoice
                     prefillFromInvoice(source)
                     if let clientId = source.clientSnapshot["public_id"]?.stringValue {
                         selectedClient = clients.first { $0.publicId == clientId }
@@ -422,20 +465,19 @@ struct CreateInvoiceScreen: View {
                         let name = source.clientName
                         selectedClient = clients.first { $0.displayName == name }
                     }
+                    // For edit/duplicate, try to match the profile used
+                    // Default to the default profile
+                    if let defaultProfile = p.first(where: { $0.isDefault }) ?? p.first {
+                        selectedProfileId = defaultProfile.publicId
+                    }
                     needsBusinessProfile = false
-                } else if let bp = p.first, !bp.companyName.isEmpty {
-                    // Create: business profile exists and has a name — prefill defaults
-                    templateSlug = bp.defaultTemplate
-                    currency = bp.defaultCurrency
-                    language = bp.defaultLanguage
-                    taxRate = bp.defaultTaxRate
-                    paymentTerms = bp.defaultPaymentTerms
-                    dueDate = Calendar.current.date(
-                        byAdding: .day, value: bp.defaultDueDays, to: issueDate
-                    ) ?? dueDate
+                } else if let defaultProfile = p.first(where: { $0.isDefault }) ?? p.first,
+                          !defaultProfile.companyName.isEmpty {
+                    // Create mode: select default profile and apply its defaults
+                    selectedProfileId = defaultProfile.publicId
+                    applyProfileDefaults(defaultProfile)
                     needsBusinessProfile = false
                 } else {
-                    // No profile or empty company name — prompt setup
                     needsBusinessProfile = true
                 }
 
@@ -449,27 +491,17 @@ struct CreateInvoiceScreen: View {
         }
     }
 
-    /// Prefill form from an existing invoice (edit or duplicate).
     private func prefillFromInvoice(_ inv: Invoice) {
-        currency = inv.currency
-        language = inv.language
-        templateSlug = inv.templateSlug
-        paymentTerms = inv.paymentTerms
-        notes = inv.notes
-        taxRate = inv.taxRate
-        taxInclusive = inv.taxInclusive
-        discountType = inv.discountType
-        discountValue = inv.discountValue
+        currency = inv.currency; language = inv.language
+        templateSlug = inv.templateSlug; paymentTerms = inv.paymentTerms
+        notes = inv.notes; taxRate = inv.taxRate; taxInclusive = inv.taxInclusive
+        discountType = inv.discountType; discountValue = inv.discountValue
 
-        // Parse dates
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd"
+        let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
         if mode == .edit {
-            // Edit: use original dates
             issueDate = df.date(from: inv.issueDate) ?? Date()
             dueDate = df.date(from: inv.dueDate) ?? Date()
         } else {
-            // Duplicate: use today + same offset
             issueDate = Date()
             if let originalIssue = df.date(from: inv.issueDate),
                let originalDue = df.date(from: inv.dueDate) {
@@ -478,20 +510,12 @@ struct CreateInvoiceScreen: View {
             }
         }
 
-        // Convert invoice items to local items
         items = inv.items.map { item in
-            LocalItem(
-                name: item.name,
-                description: item.description,
-                quantity: Double(item.quantity) ?? 1,
-                unitPrice: Double(item.unitPrice) ?? 0
-            )
+            LocalItem(name: item.name, description: item.description,
+                      quantity: Double(item.quantity) ?? 1, unitPrice: Double(item.unitPrice) ?? 0)
         }
 
-        // For edit mode, track the existing invoice ID
-        if mode == .edit {
-            savedInvoiceId = inv.publicId
-        }
+        if mode == .edit { savedInvoiceId = inv.publicId }
     }
 
     // MARK: - Build API Body
@@ -513,6 +537,8 @@ struct CreateInvoiceScreen: View {
             }
         ]
         if let client = selectedClient { body["client_id"] = client.publicId }
+        // Send selected business profile so the API uses that sender
+        if !selectedProfileId.isEmpty { body["business_profile_id"] = selectedProfileId }
         return body
     }
 
@@ -526,71 +552,53 @@ struct CreateInvoiceScreen: View {
         }
     }
 
-    /// Edit mode: PUT to update the existing draft invoice.
     private func saveEdit() {
         guard let invoiceId = editInvoice?.publicId else { return }
         isSaving = true; errorMessage = ""
         Task {
             do {
                 _ = try await APIClient.shared.request(
-                    Invoice.self, method: "PUT",
-                    path: "/invoices/\(invoiceId)/",
-                    body: buildBody()
-                )
+                    Invoice.self, method: "PUT", path: "/invoices/\(invoiceId)/", body: buildBody())
                 await MainActor.run { isSaving = false; isPresented = false }
             } catch {
                 await MainActor.run {
-                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"
-                    isSaving = false
+                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"; isSaving = false
                 }
             }
         }
     }
 
-    /// Create/Duplicate: POST a new invoice then navigate to preview.
     private func saveAndPreview() {
         if savedInvoiceId != nil { showPreview = true; return }
         isSaving = true; errorMessage = ""
         Task {
             do {
                 let result = try await APIClient.shared.request(
-                    Invoice.self, method: "POST", path: "/invoices/", body: buildBody()
-                )
-                await MainActor.run {
-                    savedInvoiceId = result.publicId
-                    isSaving = false; showPreview = true
-                }
+                    Invoice.self, method: "POST", path: "/invoices/", body: buildBody())
+                await MainActor.run { savedInvoiceId = result.publicId; isSaving = false; showPreview = true }
             } catch let error as APIError {
                 if case .limitReached = error {
                     await MainActor.run { isSaving = false; showPaywall = true }
                 } else {
-                    await MainActor.run {
-                        errorMessage = error.errorDescription ?? "Failed to save"
-                        isSaving = false
-                    }
+                    await MainActor.run { errorMessage = error.errorDescription ?? "Failed to save"; isSaving = false }
                 }
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription; isSaving = false
-                }
+                await MainActor.run { errorMessage = error.localizedDescription; isSaving = false }
             }
         }
     }
 
-    /// Save as draft and close (create/duplicate only).
     private func saveDraft() {
         guard savedInvoiceId == nil else { isPresented = false; return }
         isSaving = true; errorMessage = ""
         Task {
             do {
                 _ = try await APIClient.shared.request(
-                    Invoice.self, method: "POST", path: "/invoices/", body: buildBody()
-                )
+                    Invoice.self, method: "POST", path: "/invoices/", body: buildBody())
                 await MainActor.run { isSaving = false; isPresented = false }
             } catch {
                 await MainActor.run {
-                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"
-                    isSaving = false
+                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"; isSaving = false
                 }
             }
         }

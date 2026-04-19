@@ -1,7 +1,6 @@
 // Screens/AddItemSheet.swift
 // Bottom sheet to add a line item to an invoice.
 // Two tabs: "Custom" (one-time item) and "Saved" (from saved products).
-// Uses shared form components for consistent styling.
 
 import SwiftUI
 
@@ -23,12 +22,32 @@ struct AddItemSheet: View {
     @State private var isSavingProduct = false
     @State private var errorMessage = ""
 
+    // Track if the current item came from a saved product
+    @State private var selectedProductId: String? = nil
+
     private var amount: Double {
         (Double(quantity) ?? 0) * (Double(unitPrice) ?? 0)
     }
 
     private var isValid: Bool {
         !name.isEmpty && (Double(unitPrice) ?? 0) > 0
+    }
+
+    /// True when the user has modified the item away from the saved product it came from
+    private var isModifiedFromSaved: Bool {
+        guard let productId = selectedProductId,
+              let original = products.first(where: { $0.publicId == productId }) else {
+            // No saved product selected -- it's a fresh custom item
+            return false
+        }
+        return name != original.name ||
+               description != original.description ||
+               unitPrice != original.defaultPrice
+    }
+
+    /// Show "Save for later" when: no saved product selected (fresh custom), or modified from saved
+    private var showSaveToggle: Bool {
+        selectedProductId == nil || isModifiedFromSaved
     }
 
     private var filteredProducts: [Product] {
@@ -42,7 +61,6 @@ struct AddItemSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Tab selector
                 Picker("", selection: $activeTab) {
                     Text("Custom").tag(0)
                     Text("Saved Items").tag(1)
@@ -99,7 +117,6 @@ struct AddItemSheet: View {
                         }
                     }
 
-                    // Amount preview
                     if amount > 0 {
                         HStack {
                             Text("Line Total").foregroundStyle(.secondary)
@@ -114,17 +131,19 @@ struct AddItemSheet: View {
                     }
                 }
 
-                // Save toggle
-                Toggle(isOn: $saveAsProduct) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Save for later")
-                            .font(.subheadline)
-                        Text("Add to your saved items for quick reuse")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                // Only show save toggle for new items or modified saved items
+                if showSaveToggle {
+                    Toggle(isOn: $saveAsProduct) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Save for later")
+                                .font(.subheadline)
+                            Text(isModifiedFromSaved ? "Save as a new product" : "Add to your saved items for quick reuse")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
+                    .padding(.horizontal, 4)
                 }
-                .padding(.horizontal, 4)
 
                 if !errorMessage.isEmpty {
                     InlineBanner(message: errorMessage, style: .error)
@@ -150,19 +169,14 @@ struct AddItemSheet: View {
                 VStack(spacing: 16) {
                     Spacer()
                     Image(systemName: "archivebox")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.secondary)
-                    Text("No saved items")
-                        .font(.headline)
+                        .font(.system(size: 44)).foregroundStyle(.secondary)
+                    Text("No saved items").font(.headline)
                     Text("Create a custom item and toggle \"Save for later\" to build your product library.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center).padding(.horizontal, 32)
                     Spacer()
                 }
             } else {
-                // Search
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField("Search saved items…", text: $searchText).autocorrectionDisabled()
@@ -178,31 +192,9 @@ struct AddItemSheet: View {
                     ScrollView {
                         VStack(spacing: 0) {
                             ForEach(filteredProducts) { product in
-                                Button { selectProduct(product) } label: {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "cube.box")
-                                            .font(.body).foregroundStyle(.blue)
-                                            .frame(width: 36, height: 36)
-                                            .background(Color.blue.opacity(0.08))
-                                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                                        VStack(alignment: .leading, spacing: 3) {
-                                            Text(product.name)
-                                                .font(.body.weight(.medium))
-                                                .foregroundStyle(.primary)
-                                            if !product.description.isEmpty {
-                                                Text(product.description)
-                                                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                                            }
-                                        }
-                                        Spacer()
-                                        Text("\(currencySymbol)\(product.defaultPrice)")
-                                            .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                                    }
-                                    .padding(.vertical, 12).padding(.horizontal, 20)
-                                }
-                                .buttonStyle(.plain)
+                                productRow(product)
                                 if product.id != filteredProducts.last?.id {
-                                    Divider().padding(.leading, 68)
+                                    Divider().padding(.leading, 20)
                                 }
                             }
                         }
@@ -210,6 +202,32 @@ struct AddItemSheet: View {
                 }
             }
         }
+    }
+
+    private func productRow(_ product: Product) -> some View {
+        Button { selectProduct(product) } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "cube.box")
+                    .font(.body).foregroundStyle(.blue)
+                    .frame(width: 36, height: 36)
+                    .background(Color.blue.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(product.name)
+                        .font(.body.weight(.medium)).foregroundStyle(.primary)
+                    if !product.description.isEmpty {
+                        Text(product.description)
+                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    }
+                }
+                Spacer()
+                Text("\(currencySymbol)\(product.defaultPrice)")
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
+            }
+            .padding(.vertical, 14).padding(.horizontal, 20)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Actions
@@ -234,6 +252,8 @@ struct AddItemSheet: View {
         description = product.description
         unitPrice = product.defaultPrice
         quantity = "1"
+        selectedProductId = product.publicId
+        saveAsProduct = false
         activeTab = 0
     }
 

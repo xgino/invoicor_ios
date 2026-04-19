@@ -3,6 +3,7 @@
 // Uses SubPageLayout for consistent back button and no nav chrome.
 
 import SwiftUI
+import WebKit
 
 struct InvoiceDetailScreen: View {
     let invoiceId: String
@@ -20,6 +21,9 @@ struct InvoiceDetailScreen: View {
     @State private var isGeneratingPDF = false
     @State private var showEditForm = false
     @State private var showDuplicateForm = false
+
+    // A4 aspect ratio: 210mm / 297mm
+    private let a4Ratio: CGFloat = 210.0 / 297.0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -54,6 +58,9 @@ struct InvoiceDetailScreen: View {
 
             // Content
             ZStack {
+                // Neutral background so the invoice "page" floats on it
+                Color(.systemGroupedBackground).ignoresSafeArea()
+
                 if isLoading {
                     ProgressView("Loading invoice…").frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if !errorMessage.isEmpty {
@@ -63,7 +70,17 @@ struct InvoiceDetailScreen: View {
                         Button("Retry") { Task { await loadInvoice() } }.buttonStyle(.borderedProminent)
                     }.padding(40)
                 } else if let html = htmlContent {
-                    HTMLView(content: html, interactive: true)
+                    GeometryReader { geo in
+                        let available = geo.size
+                        let fitWidth = min(available.width - 24, available.height * a4Ratio)
+                        let fitHeight = fitWidth / a4Ratio
+
+                        InvoicePreviewView(html: html)
+                            .frame(width: fitWidth, height: fitHeight)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
+                            .position(x: available.width / 2, y: available.height / 2)
+                    }
                 } else {
                     ProgressView("Rendering…").frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -177,27 +194,55 @@ struct InvoiceDetailScreen: View {
         }
     }
 
+    /// Generate a single-page A4 PDF using WKWebView.
+    /// WKWebView renders CSS mm units at 96dpi (1mm = 3.7795px),
+    /// so 210mm x 297mm = 793.7px x 1122.5px.
+    /// We size the webview to match, then createPDF captures the full content.
     private func generatePDF(from html: String) async -> URL? {
         await withCheckedContinuation { continuation in
             DispatchQueue.main.async {
-                let renderer = UIPrintPageRenderer()
-                let formatter = UIMarkupTextPrintFormatter(markupText: html)
-                let pw: CGFloat = 595.28, ph: CGFloat = 841.89
-                let paper = CGRect(x: 0, y: 0, width: pw, height: ph)
-                renderer.setValue(NSValue(cgRect: paper), forKey: "paperRect")
-                renderer.setValue(NSValue(cgRect: paper), forKey: "printableRect")
-                renderer.addPrintFormatter(formatter, startingAtPageAt: 0)
-                let data = NSMutableData()
-                UIGraphicsBeginPDFContextToData(data, paper, nil)
-                for i in 0..<renderer.numberOfPages {
-                    UIGraphicsBeginPDFPage()
-                    renderer.drawPage(at: i, in: UIGraphicsGetPDFContextBounds())
+                let cssWidth: CGFloat = 794
+                let cssHeight: CGFloat = 1123
+
+                let config = WKWebViewConfiguration()
+                let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: cssWidth, height: cssHeight), configuration: config)
+                webView.isOpaque = false
+                webView.backgroundColor = .white
+
+                var pdfHTML = html
+                if pdfHTML.contains("<head>") {
+                    pdfHTML = pdfHTML.replacingOccurrences(
+                        of: "<head>",
+                        with: "<head><meta name=\"viewport\" content=\"width=\(Int(cssWidth)), initial-scale=1.0, shrink-to-fit=no\">"
+                    )
                 }
-                UIGraphicsEndPDFContext()
-                let name = "\(self.invoice?.invoiceNumber ?? "invoice").pdf"
-                let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
-                do { try data.write(to: url, options: .atomic); continuation.resume(returning: url) }
-                catch { continuation.resume(returning: nil) }
+
+                let delegate = PDFNavigationDelegate {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        let pdfConfig = WKPDFConfiguration()
+                        pdfConfig.rect = CGRect(x: 0, y: 0, width: cssWidth, height: cssHeight)
+
+                        webView.createPDF(configuration: pdfConfig) { result in
+                            switch result {
+                            case .success(let data):
+                                let name = "\(self.invoice?.invoiceNumber ?? "invoice").pdf"
+                                let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+                                do {
+                                    try data.write(to: url, options: .atomic)
+                                    continuation.resume(returning: url)
+                                } catch {
+                                    continuation.resume(returning: nil)
+                                }
+                            case .failure:
+                                continuation.resume(returning: nil)
+                            }
+                        }
+                    }
+                }
+                webView.navigationDelegate = delegate
+                objc_setAssociatedObject(webView, "pdfDelegate", delegate, .OBJC_ASSOCIATION_RETAIN)
+
+                webView.loadHTMLString(pdfHTML, baseURL: nil)
             }
         }
     }
@@ -219,9 +264,8 @@ struct InvoiceDetailScreen: View {
     private func loadInvoice() async {
         isLoading = true; errorMessage = ""
         do {
-            async let invReq = APIClient.shared.request(Invoice.self, method: "GET", path: "/invoices/\(invoiceId)/")
-            async let htmlReq = APIClient.shared.requestRaw(path: "/invoices/\(invoiceId)/render/")
-            let (inv, html) = try await (invReq, htmlReq)
+            let inv = try await APIClient.shared.request(Invoice.self, method: "GET", path: "/invoices/\(invoiceId)/")
+            let html = try await APIClient.shared.requestRaw(path: "/invoices/\(invoiceId)/render/")
             await MainActor.run { invoice = inv; htmlContent = html; isLoading = false }
         } catch {
             await MainActor.run { errorMessage = (error as? APIError)?.errorDescription ?? "Failed to load"; isLoading = false }
@@ -244,6 +288,84 @@ struct InvoiceDetailScreen: View {
             } catch {
                 await MainActor.run { isUpdating = false; errorMessage = (error as? APIError)?.errorDescription ?? "Failed to update" }
             }
+        }
+    }
+}
+
+// MARK: - PDF Navigation Delegate
+private class PDFNavigationDelegate: NSObject, WKNavigationDelegate {
+    let onFinished: () -> Void
+
+    init(onFinished: @escaping () -> Void) {
+        self.onFinished = onFinished
+    }
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        onFinished()
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        onFinished()
+    }
+}
+
+// MARK: - Invoice Preview (hidden indicators, no white bleed, fits on open)
+/// Renders the invoice HTML at its native 794px width, then uses a CSS transform
+/// to visually scale it down to fit the preview frame. This is a pure visual
+/// shrink -- no re-layout, no font reflow, pixel-perfect match to the template.
+private struct InvoicePreviewView: UIViewRepresentable {
+    let html: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        let webView = WKWebView(frame: .zero, configuration: config)
+
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+
+        webView.scrollView.isScrollEnabled = true
+        webView.scrollView.bounces = false
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
+        webView.scrollView.contentInsetAdjustmentBehavior = .never
+
+        webView.scrollView.minimumZoomScale = 1.0
+        webView.scrollView.maximumZoomScale = 5.0
+
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let tag = html.hashValue
+        if webView.tag != tag {
+            webView.tag = tag
+
+            let frameWidth = webView.frame.width > 0 ? webView.frame.width : UIScreen.main.bounds.width - 24
+            let contentWidth: CGFloat = 794   // 210mm at 96dpi
+            let contentHeight: CGFloat = 1123  // 297mm at 96dpi
+            let scale = frameWidth / contentWidth
+            let scaledHeight = contentHeight * scale
+
+            let scaleCSS = """
+            <style>
+                html { width: \(Int(scaledHeight * (contentWidth / contentHeight)))px;
+                       height: \(Int(scaledHeight))px; overflow: hidden; }
+                body { width: \(Int(contentWidth))px; height: \(Int(contentHeight))px;
+                       margin: 0; padding: 0;
+                       transform: scale(\(scale)); transform-origin: top left; }
+            </style>
+            """
+
+            var previewHTML = html
+            if previewHTML.contains("<head>") {
+                previewHTML = previewHTML.replacingOccurrences(
+                    of: "<head>",
+                    with: "<head>\(scaleCSS)"
+                )
+            }
+
+            webView.loadHTMLString(previewHTML, baseURL: nil)
         }
     }
 }

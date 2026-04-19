@@ -1,6 +1,5 @@
 // Screens/ClientPickerSheet.swift
 // Bottom sheet to select an existing client or create a new one inline.
-// Uses shared form components for consistent styling.
 
 import SwiftUI
 
@@ -75,32 +74,9 @@ struct ClientPickerSheet: View {
                     ScrollView {
                         VStack(spacing: 0) {
                             ForEach(filteredClients) { client in
-                                Button {
-                                    selected = client
-                                    dismiss()
-                                } label: {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "person.circle.fill")
-                                            .font(.title3).foregroundStyle(.secondary)
-                                        VStack(alignment: .leading, spacing: 2) {
-                                            Text(client.displayName)
-                                                .font(.body).foregroundStyle(.primary)
-                                            if !client.email.isEmpty {
-                                                Text(client.email)
-                                                    .font(.caption).foregroundStyle(.secondary)
-                                            }
-                                        }
-                                        Spacer()
-                                        if selected?.publicId == client.publicId {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(.blue)
-                                        }
-                                    }
-                                    .padding(.vertical, 12).padding(.horizontal, 16)
-                                }
-                                .buttonStyle(.plain)
+                                clientRow(client)
                                 if client.id != filteredClients.last?.id {
-                                    Divider().padding(.leading, 52)
+                                    Divider().padding(.leading, 16)
                                 }
                             }
                         }
@@ -115,6 +91,35 @@ struct ClientPickerSheet: View {
                 }
             }
         }
+    }
+
+    // MARK: - Client Row (full width tappable)
+    private func clientRow(_ client: Client) -> some View {
+        Button {
+            selected = client
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.circle.fill")
+                    .font(.title3).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(client.displayName)
+                        .font(.body).foregroundStyle(.primary)
+                    if !client.email.isEmpty {
+                        Text(client.email)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                if selected?.publicId == client.publicId {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.blue)
+                }
+            }
+            .padding(.vertical, 14).padding(.horizontal, 16)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - New Client Form
@@ -152,8 +157,7 @@ struct ClientPickerSheet: View {
     }
 
     private func saveNewClient() {
-        isSaving = true
-        errorMessage = ""
+        isSaving = true; errorMessage = ""
         Task {
             do {
                 let client = try await APIClient.shared.request(

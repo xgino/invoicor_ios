@@ -1,12 +1,11 @@
 // Screens/LibraryScreen.swift
-// Tab 4: Library — Clients + Saved Products in one place.
-// Segmented picker at top to switch between the two.
-// Both have search, add, and swipe-to-delete.
+// Tab 4: Library -- Clients + Products + Business profiles.
+// Segmented picker at top to switch between the three.
 
 import SwiftUI
 
 struct LibraryScreen: View {
-    @State private var activeTab = 0  // 0 = Clients, 1 = Products
+    @State private var activeTab = 0
     @State private var clients: [Client] = []
     @State private var products: [Product] = []
     @State private var invoices: [Invoice] = []
@@ -16,12 +15,16 @@ struct LibraryScreen: View {
     @State private var showAddProduct = false
     @State private var defaultCurrencySymbol = "$"
     @State private var businessProfiles: [BusinessProfile] = []
+    @State private var showBusinessProfile = false
+    @State private var editProfileIndex: Int? = nil
 
     var auth = AuthManager.shared
 
+    private var profileLimit: Int { auth.limits?.businessProfiles ?? 1 }
+    private var canAddProfile: Bool { businessProfiles.count < profileLimit }
+
     var body: some View {
         VStack(spacing: 0) {
-            // Segmented picker — 3 tabs
             Picker("", selection: $activeTab) {
                 Text("Clients").tag(0)
                 Text("Products").tag(1)
@@ -33,10 +36,9 @@ struct LibraryScreen: View {
             .padding(.bottom, 4)
 
             if activeTab == 2 {
-                // Business profile tab — show profile cards, tap to edit
                 businessTab
             } else {
-                // Search bar (clients + products only)
+                // Search bar
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                     TextField(activeTab == 0 ? "Search clients…" : "Search products…", text: $searchText)
@@ -54,8 +56,6 @@ struct LibraryScreen: View {
 
                 Divider()
 
-            // Content
-                // Content
                 if isLoading {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if activeTab == 0 {
@@ -63,18 +63,15 @@ struct LibraryScreen: View {
                 } else {
                     productsList
                 }
-            } // end else (non-business tabs)
+            }
         }
         .navigationTitle("Library")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if activeTab != 2 {
-                    Button {
-                        if activeTab == 0 { showAddClient = true }
-                        else { showAddProduct = true }
-                    } label: {
-                        Image(systemName: "plus")
-                    }
+                if activeTab == 0 {
+                    Button { showAddClient = true } label: { Image(systemName: "plus") }
+                } else if activeTab == 1 {
+                    Button { showAddProduct = true } label: { Image(systemName: "plus") }
                 }
             }
         }
@@ -86,74 +83,191 @@ struct LibraryScreen: View {
         .sheet(isPresented: $showAddProduct, onDismiss: { Task { await refreshProducts() } }) {
             ProductFormSheet(products: $products, editing: nil, currencySymbol: defaultCurrencySymbol)
         }
+        .navigationDestination(isPresented: $showBusinessProfile) {
+            BusinessProfileScreen()
+        }
         .onChange(of: activeTab) { _, _ in searchText = "" }
+        .onChange(of: showBusinessProfile) { _, isShowing in
+            if !isShowing { Task { await refreshBusinessProfiles() } }
+        }
     }
 
     // MARK: - Business Tab
 
     private var businessTab: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                if businessProfiles.isEmpty {
+            VStack(spacing: 12) {
+                if businessProfiles.isEmpty && !isLoading {
                     emptyState(
                         icon: "building.2",
                         title: "No business profile",
                         message: "Set up your business info to start creating invoices.",
                         buttonTitle: "Set Up Profile"
                     ) {
-                        // Navigate to BusinessProfileScreen
+                        Task { await createNewProfile() }
                     }
                 } else {
-                    ForEach(businessProfiles) { profile in
-                        NavigationLink {
-                            BusinessProfileScreen()
-                        } label: {
-                            HStack(spacing: 14) {
-                                // Avatar
-                                ZStack {
-                                    Circle().fill(avatarColor(for: profile.companyName.isEmpty ? "BP" : profile.companyName))
-                                    Text(avatarInitials(profile.companyName.isEmpty ? "BP" : profile.companyName))
-                                        .font(.caption.weight(.bold)).foregroundStyle(.white)
-                                }
-                                .frame(width: 44, height: 44)
+                    ForEach(Array(businessProfiles.enumerated()), id: \.element.publicId) { index, profile in
+                        businessCard(profile: profile, index: index)
+                    }
+                }
 
-                                VStack(alignment: .leading, spacing: 3) {
-                                    HStack(spacing: 6) {
-                                        Text(profile.displayName)
-                                            .font(.body.weight(.medium)).foregroundStyle(.primary)
-                                        if profile.isDefault {
-                                            Text("Default")
-                                                .font(.caption2.weight(.semibold))
-                                                .foregroundStyle(.blue)
-                                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                                .background(Color.blue.opacity(0.1))
-                                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                        }
-                                    }
-                                    if !profile.email.isEmpty {
-                                        Text(profile.email)
-                                            .font(.caption).foregroundStyle(.secondary)
-                                    }
-                                    if !profile.formattedAddress.isEmpty {
-                                        Text(profile.formattedAddress)
-                                            .font(.caption).foregroundStyle(.tertiary).lineLimit(1)
-                                    }
-                                }
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
-                                    .font(.caption).foregroundStyle(.tertiary)
-                            }
-                            .padding(14)
-                            .background(Color(.systemGray6).opacity(0.7))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Add profile hint (when they have profiles but can add more)
+                if !businessProfiles.isEmpty && canAddProfile {
+                    Button { Task { await createNewProfile() } } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.blue)
+                            Text("Add Business Profile")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.blue)
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.blue.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.blue.opacity(0.15), lineWidth: 1))
                     }
                     .padding(.horizontal, 16)
                 }
+
+                // Tier limit note
+                if !canAddProfile && businessProfiles.count > 0 {
+                    Text("Your plan allows up to \(profileLimit) business profile\(profileLimit == 1 ? "" : "s").")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                }
             }
             .padding(.top, 12)
+            .padding(.bottom, 20)
+        }
+    }
+
+    private func businessCard(profile: BusinessProfile, index: Int) -> some View {
+        Button { showBusinessProfile = true } label: {
+            HStack(spacing: 14) {
+                // Logo or avatar
+                Group {
+                    if let logo = profile.logo, !logo.isEmpty, let img = imageFromBase64(logo) {
+                        Image(uiImage: img).resizable().scaledToFill()
+                    } else {
+                        ZStack {
+                            Circle().fill(avatarColor(for: profile.companyName.isEmpty ? "BP" : profile.companyName))
+                            Text(avatarInitials(profile.companyName.isEmpty ? "BP" : profile.companyName))
+                                .font(.caption.weight(.bold)).foregroundStyle(.white)
+                        }
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(profile.displayName)
+                            .font(.body.weight(.medium)).foregroundStyle(.primary)
+                        if profile.isDefault {
+                            Text("Default")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(.blue)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                    }
+                    if !profile.email.isEmpty {
+                        Text(profile.email)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    if !profile.formattedAddress.isEmpty {
+                        Text(profile.formattedAddress)
+                            .font(.caption).foregroundStyle(.tertiary).lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption).foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.systemGray6).opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if !profile.isDefault {
+                Button {
+                    Task { await setDefaultProfile(profile) }
+                } label: {
+                    Label("Set as Default", systemImage: "star")
+                }
+            } else {
+                Label("Default Profile", systemImage: "star.fill")
+            }
+
+            if businessProfiles.count > 1 {
+                Divider()
+                Button(role: .destructive) {
+                    Task { await deleteProfile(profile) }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+    }
+
+    /// Decode a base64 data URI to UIImage for logo display
+    private func imageFromBase64(_ dataURI: String) -> UIImage? {
+        guard let commaIndex = dataURI.firstIndex(of: ",") else { return nil }
+        let base64String = String(dataURI[dataURI.index(after: commaIndex)...])
+        guard let data = Data(base64Encoded: base64String) else { return nil }
+        return UIImage(data: data)
+    }
+
+    // MARK: - Business Profile Actions
+
+    private func createNewProfile() async {
+        do {
+            let created = try await APIClient.shared.request(
+                BusinessProfile.self, method: "POST",
+                path: "/accounts/business-profiles/",
+                body: ["company_name": ""]
+            )
+            await MainActor.run {
+                businessProfiles.append(created)
+                showBusinessProfile = true
+            }
+        } catch {
+            // Silently fail -- profile limit check on backend will return error
+        }
+    }
+
+    private func setDefaultProfile(_ profile: BusinessProfile) async {
+        do {
+            let _ = try await APIClient.shared.request(
+                BusinessProfile.self, method: "PUT",
+                path: "/accounts/business-profiles/\(profile.publicId)/",
+                body: ["is_default": true]
+            )
+            await refreshBusinessProfiles()
+        } catch {
+            // Silently fail
+        }
+    }
+
+    private func deleteProfile(_ profile: BusinessProfile) async {
+        guard businessProfiles.count > 1 else { return }
+        do {
+            try await APIClient.shared.requestNoContent(
+                method: "DELETE",
+                path: "/accounts/business-profiles/\(profile.publicId)/"
+            )
+            await MainActor.run {
+                businessProfiles.removeAll { $0.publicId == profile.publicId }
+            }
+        } catch {
+            // Silently fail
         }
     }
 
@@ -190,9 +304,7 @@ struct LibraryScreen: View {
                             clientRow(client)
                         }
                     }
-                    .onDelete { indexSet in
-                        deleteClients(at: indexSet)
-                    }
+                    .onDelete { indexSet in deleteClients(at: indexSet) }
                 }
                 .listStyle(.plain)
             }
@@ -202,7 +314,6 @@ struct LibraryScreen: View {
     private func clientRow(_ client: Client) -> some View {
         let stats = clientStats(for: client)
         return HStack(spacing: 12) {
-            // Avatar
             ZStack {
                 Circle().fill(avatarColor(for: client.displayName))
                 Text(avatarInitials(client.displayName))
@@ -267,9 +378,7 @@ struct LibraryScreen: View {
                             productRow(product)
                         }
                     }
-                    .onDelete { indexSet in
-                        deleteProducts(at: indexSet)
-                    }
+                    .onDelete { indexSet in deleteProducts(at: indexSet) }
                 }
                 .listStyle(.plain)
                 .sheet(item: $editingProduct, onDismiss: { Task { await refreshProducts() } }) { product in
@@ -281,7 +390,6 @@ struct LibraryScreen: View {
 
     private func productRow(_ product: Product) -> some View {
         HStack(spacing: 12) {
-            // Colored initial avatar (like clients)
             ZStack {
                 Circle().fill(avatarColor(for: product.name))
                 Text(avatarInitials(product.name))

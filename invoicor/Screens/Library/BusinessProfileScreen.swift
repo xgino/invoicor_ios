@@ -1,17 +1,14 @@
 // Screens/Library/BusinessProfileScreen.swift
-// Full business profile editor with multi-profile support.
-// Logo is sent as base64 data URI in the JSON body — no multipart upload.
+// Single business profile editor. Navigated to from LibraryScreen.
+// All profile management (add, delete, set default) lives in LibraryScreen.
+// Logo is sent as base64 data URI in the JSON body.
 
 import SwiftUI
-import PhotosUI
+import UniformTypeIdentifiers
 
 struct BusinessProfileScreen: View {
     @Environment(\.dismiss) private var dismiss
     var auth = AuthManager.shared
-
-    // MARK: - Profile List
-    @State private var allProfiles: [BusinessProfile] = []
-    @State private var selectedProfileIndex: Int = 0
 
     // MARK: - Profile Data
     @State private var profileId = ""
@@ -43,10 +40,10 @@ struct BusinessProfileScreen: View {
     @State private var defaultDueDays = "30"
 
     // MARK: - Logo
-    @State private var logoBase64: String = ""   // Stored data URI from API
-    @State private var selectedPhoto: PhotosPickerItem? = nil
-    @State private var logoImage: UIImage? = nil  // Locally picked image (not yet saved)
-    @State private var newLogoBase64: String? = nil  // Converted base64 of new pick
+    @State private var logoBase64: String = ""
+    @State private var showFilePicker = false
+    @State private var logoImage: UIImage? = nil
+    @State private var newLogoBase64: String? = nil
 
     // MARK: - Dropdown Data
     @State private var currencies: [Currency] = []
@@ -60,10 +57,6 @@ struct BusinessProfileScreen: View {
     @State private var isSaving = false
     @State private var errorMessage = ""
     @State private var successMessage = ""
-    @State private var showDeleteProfileConfirm = false
-
-    private var profileLimit: Int { auth.limits?.businessProfiles ?? 1 }
-    private var canAddProfile: Bool { allProfiles.count < profileLimit }
 
     // MARK: - Body
     var body: some View {
@@ -78,19 +71,8 @@ struct BusinessProfileScreen: View {
             SubPageLayout(
                 title: "Business Profile",
                 subtitle: companyName.isEmpty ? nil : companyName,
-                trailingButton: canAddProfile ? AnyView(
-                    Button { Task { await createNewProfile() } } label: {
-                        Image(systemName: "plus")
-                            .font(.body.weight(.semibold))
-                            .foregroundStyle(.blue)
-                            .frame(width: 36, height: 36)
-                            .background(Color(.systemGray6))
-                            .clipShape(Circle())
-                    }
-                ) : nil,
                 onBack: { dismiss() }
             ) {
-                if allProfiles.count > 1 { profileSwitcher }
                 logoSection
                 companySection
                 contactSection
@@ -99,63 +81,30 @@ struct BusinessProfileScreen: View {
                 bankingInternationalSection
                 bankingUSSection
                 invoiceDefaultsSection
-                if allProfiles.count > 1 { deleteProfileSection }
             } bottomBar: {
                 if !successMessage.isEmpty { InlineBanner(message: successMessage, style: .success) }
                 if !errorMessage.isEmpty { InlineBanner(message: errorMessage, style: .error) }
                 ButtonPrimary(title: "Save Changes", isLoading: isSaving) { saveProfile() }
             }
-            .onChange(of: selectedPhoto) { _, newValue in loadPhoto(from: newValue) }
+            .fileImporter(
+                isPresented: $showFilePicker,
+                allowedContentTypes: [.png, .jpeg, .webP, .svg, .image],
+                allowsMultipleSelection: false
+            ) { result in
+                if case .success(let urls) = result, let url = urls.first {
+                    loadFileFromURL(url)
+                }
+            }
             .sheet(isPresented: $showTemplatePicker) {
                 TemplatePickerSheet(templates: templates, selected: $defaultTemplate)
             }
-            .alert("Delete this profile?", isPresented: $showDeleteProfileConfirm) {
-                Button("Delete", role: .destructive) { Task { await deleteCurrentProfile() } }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will permanently delete \"\(companyName.isEmpty ? "this profile" : companyName)\". Existing invoices are not affected.")
-            }
         }
-    }
-
-    // MARK: - Profile Switcher
-    private var profileSwitcher: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(Array(allProfiles.enumerated()), id: \.element.publicId) { index, profile in
-                    Button { switchToProfile(at: index) } label: {
-                        HStack(spacing: 8) {
-                            if profile.isDefault {
-                                Image(systemName: "star.fill").font(.caption2).foregroundStyle(.orange)
-                            }
-                            Text(profile.companyName.isEmpty ? "Profile \(index + 1)" : profile.companyName)
-                                .font(.subheadline.weight(index == selectedProfileIndex ? .semibold : .regular))
-                                .lineLimit(1)
-                        }
-                        .padding(.horizontal, 14).padding(.vertical, 8)
-                        .background(index == selectedProfileIndex ? Color.blue.opacity(0.1) : Color(.systemGray6).opacity(0.7))
-                        .foregroundStyle(index == selectedProfileIndex ? .blue : .primary)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(index == selectedProfileIndex ? Color.blue.opacity(0.3) : .clear, lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    private var deleteProfileSection: some View {
-        Button(role: .destructive) { showDeleteProfileConfirm = true } label: {
-            HStack(spacing: 8) { Image(systemName: "trash"); Text("Delete This Profile") }
-                .font(.subheadline).frame(maxWidth: .infinity).padding(.vertical, 12)
-        }.padding(.top, 8)
     }
 
     // MARK: - Logo Section
     private var logoSection: some View {
         FormSection(title: "Logo") {
             HStack(spacing: 16) {
-                // Show picked image, or existing base64 logo, or placeholder
                 Group {
                     if let img = logoImage {
                         Image(uiImage: img).resizable().scaledToFill()
@@ -171,17 +120,22 @@ struct BusinessProfileScreen: View {
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.systemGray4), lineWidth: 0.5))
 
                 VStack(alignment: .leading, spacing: 6) {
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        Text(logoImage != nil || !logoBase64.isEmpty ? "Change Logo" : "Upload Logo")
-                            .font(.subheadline.weight(.medium))
+                    Button {
+                        showFilePicker = true
+                    } label: {
+                        Label(
+                            logoImage != nil || !logoBase64.isEmpty ? "Change Logo" : "Upload Logo",
+                            systemImage: "folder"
+                        )
+                        .font(.subheadline.weight(.medium))
                     }
-                    Text("Appears on your invoices. Optional.").font(.caption).foregroundStyle(.tertiary)
+                    Text("PNG, JPG, SVG or WebP. Transparency preserved.")
+                        .font(.caption).foregroundStyle(.tertiary)
 
-                    // Remove logo button
                     if logoImage != nil || !logoBase64.isEmpty {
                         Button {
                             logoImage = nil
-                            newLogoBase64 = ""  // Empty string = remove logo
+                            newLogoBase64 = ""
                             logoBase64 = ""
                         } label: {
                             Text("Remove Logo").font(.caption).foregroundStyle(.red)
@@ -193,7 +147,6 @@ struct BusinessProfileScreen: View {
         }
     }
 
-    /// Decode a base64 data URI to UIImage for display
     private func imageFromBase64(_ dataURI: String) -> UIImage? {
         guard let commaIndex = dataURI.firstIndex(of: ",") else { return nil }
         let base64String = String(dataURI[dataURI.index(after: commaIndex)...])
@@ -201,7 +154,7 @@ struct BusinessProfileScreen: View {
         return UIImage(data: data)
     }
 
-    // MARK: - Form Sections (unchanged)
+    // MARK: - Form Sections
     private var companySection: some View {
         FormSection(title: "Company", footer: "Company name appears at the top of your invoices.") {
             StyledFormField("Company Name", text: $companyName, placeholder: "Your company or full name")
@@ -279,38 +232,53 @@ struct BusinessProfileScreen: View {
         }
     }
 
-    // MARK: - Photo Picker → Base64
-    private func loadPhoto(from item: PhotosPickerItem?) {
-        guard let item else { return }
-        Task {
-            if let data = try? await item.loadTransferable(type: Data.self),
-               let img = UIImage(data: data) {
-                // Resize to max 400px (keeps aspect ratio) then compress
-                let resized = resizeImage(img, maxDimension: 400)
-                let compressed = resized.jpegData(compressionQuality: 0.7) ?? data
-                let b64 = compressed.base64EncodedString()
-                let dataURI = "data:image/jpeg;base64,\(b64)"
+    // MARK: - File Picker -> Base64
+    private func loadFileFromURL(_ url: URL) {
+        guard url.startAccessingSecurityScopedResource() else { return }
+        defer { url.stopAccessingSecurityScopedResource() }
+        guard let rawData = try? Data(contentsOf: url) else { return }
+        let ext = url.pathExtension.lowercased()
 
-                await MainActor.run {
-                    logoImage = resized
-                    newLogoBase64 = dataURI
-                }
-            }
+        if ext == "svg" {
+            let b64 = rawData.base64EncodedString()
+            logoImage = UIImage(systemName: "doc.richtext")
+            newLogoBase64 = "data:image/svg+xml;base64,\(b64)"
+            return
         }
+
+        guard let originalImage = UIImage(data: rawData) else { return }
+        let resized = resizeImage(originalImage, maxDimension: 400)
+        let isPNG = ext == "png" || detectPNG(rawData)
+        let isWebP = ext == "webp"
+
+        let encodedData: Data
+        let mime: String
+        if isPNG || isWebP {
+            guard let pngData = resized.pngData() else { return }
+            encodedData = pngData; mime = "image/png"
+        } else {
+            guard let jpegData = resized.jpegData(compressionQuality: 0.8) else { return }
+            encodedData = jpegData; mime = "image/jpeg"
+        }
+
+        logoImage = resized
+        newLogoBase64 = "data:\(mime);base64,\(encodedData.base64EncodedString())"
     }
 
-    /// Resize image so the longest side is at most maxDimension pixels.
-    /// Keeps aspect ratio. Returns original if already small enough.
+    private func detectPNG(_ data: Data) -> Bool {
+        guard data.count >= 8 else { return false }
+        return data.prefix(8).elementsEqual([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A] as [UInt8])
+    }
+
     private func resizeImage(_ image: UIImage, maxDimension: CGFloat) -> UIImage {
         let size = image.size
         guard size.width > maxDimension || size.height > maxDimension else { return image }
         let scale = maxDimension / max(size.width, size.height)
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
-        let renderer = UIGraphicsImageRenderer(size: newSize)
-        return renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
+        return UIGraphicsImageRenderer(size: newSize).image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 
-    // MARK: - Profile Helpers
+    // MARK: - Populate from loaded profile
     private func populateFields(from p: BusinessProfile) {
         profileId = p.publicId; companyName = p.companyName; website = p.website
         email = p.email; phone = p.phone
@@ -324,13 +292,7 @@ struct BusinessProfileScreen: View {
         defaultPaymentTerms = p.defaultPaymentTerms; defaultDateFormat = p.defaultDateFormat
         defaultDueDays = String(p.defaultDueDays)
         logoBase64 = p.logo ?? ""
-        logoImage = nil; selectedPhoto = nil; newLogoBase64 = nil
-    }
-
-    private func switchToProfile(at index: Int) {
-        guard index < allProfiles.count else { return }
-        selectedProfileIndex = index
-        populateFields(from: allProfiles[index])
+        logoImage = nil; newLogoBase64 = nil
     }
 
     // MARK: - Load Everything
@@ -346,8 +308,8 @@ struct BusinessProfileScreen: View {
                 [InvoiceTemplate].self, method: "GET", path: "/invoices/templates/")) ?? [] }()
             let (c, l, t) = await (cReq, lReq, tReq)
             await MainActor.run {
-                allProfiles = profiles; currencies = c; languages = l; templates = t
-                if let p = profiles.first { populateFields(from: p); selectedProfileIndex = 0 }
+                currencies = c; languages = l; templates = t
+                if let p = profiles.first { populateFields(from: p) }
                 isLoading = false
             }
         } catch {
@@ -358,43 +320,13 @@ struct BusinessProfileScreen: View {
         }
     }
 
-    // MARK: - Create / Delete Profile
-    private func createNewProfile() async {
-        do {
-            let created = try await APIClient.shared.request(BusinessProfile.self,
-                method: "POST", path: "/accounts/business-profiles/", body: ["company_name": "New Profile"])
-            await MainActor.run {
-                allProfiles.append(created)
-                selectedProfileIndex = allProfiles.count - 1
-                populateFields(from: created); companyName = ""
-            }
-        } catch {
-            await MainActor.run { errorMessage = (error as? APIError)?.errorDescription ?? "Failed to create profile" }
-        }
-    }
-
-    private func deleteCurrentProfile() async {
-        guard !profileId.isEmpty, allProfiles.count > 1 else { return }
-        do {
-            try await APIClient.shared.requestNoContent(method: "DELETE", path: "/accounts/business-profiles/\(profileId)/")
-            await MainActor.run {
-                allProfiles.remove(at: selectedProfileIndex)
-                let idx = max(0, selectedProfileIndex - 1); selectedProfileIndex = idx
-                if let p = allProfiles[safe: idx] { populateFields(from: p) }
-            }
-        } catch {
-            await MainActor.run { errorMessage = (error as? APIError)?.errorDescription ?? "Failed to delete" }
-        }
-    }
-
-    // MARK: - Save Profile (pure JSON — no multipart)
+    // MARK: - Save
     private func saveProfile() {
         isSaving = true; errorMessage = ""; successMessage = ""
 
         var body: [String: Any] = [
             "company_name": companyName.trimmingCharacters(in: .whitespaces),
-            "website": website,
-            "email": email, "phone": phone,
+            "website": website, "email": email, "phone": phone,
             "address_line_1": addressLine1, "address_line_2": addressLine2,
             "city": city, "state": stateField, "postal_code": postalCode, "country": country,
             "tax_id": taxId, "registration_number": registrationNumber,
@@ -408,10 +340,7 @@ struct BusinessProfileScreen: View {
             "default_due_days": Int(defaultDueDays) ?? 30,
         ]
 
-        // Include logo if changed (new pick or removed)
-        if let newLogo = newLogoBase64 {
-            body["logo"] = newLogo  // Empty string = remove logo
-        }
+        if let newLogo = newLogoBase64 { body["logo"] = newLogo }
 
         Task {
             do {
@@ -419,26 +348,16 @@ struct BusinessProfileScreen: View {
                 if profileId.isEmpty {
                     result = try await APIClient.shared.request(
                         BusinessProfile.self, method: "POST",
-                        path: "/accounts/business-profiles/", body: body
-                    )
+                        path: "/accounts/business-profiles/", body: body)
                     await MainActor.run { profileId = result.publicId }
                 } else {
                     result = try await APIClient.shared.request(
                         BusinessProfile.self, method: "PUT",
-                        path: "/accounts/business-profiles/\(profileId)/", body: body
-                    )
+                        path: "/accounts/business-profiles/\(profileId)/", body: body)
                 }
-
                 await MainActor.run {
-                    if let idx = allProfiles.firstIndex(where: { $0.publicId == result.publicId }) {
-                        allProfiles[idx] = result
-                    } else {
-                        allProfiles.append(result)
-                    }
-                    // Update local state from saved result
                     logoBase64 = result.logo ?? ""
-                    logoImage = nil
-                    newLogoBase64 = nil
+                    logoImage = nil; newLogoBase64 = nil
                     isSaving = false
                     withAnimation { successMessage = "Profile saved" }
                 }
@@ -446,7 +365,10 @@ struct BusinessProfileScreen: View {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
                 await MainActor.run { withAnimation { successMessage = "" } }
             } catch {
-                await MainActor.run { errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"; isSaving = false }
+                await MainActor.run {
+                    errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"
+                    isSaving = false
+                }
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 await MainActor.run { withAnimation { errorMessage = "" } }
             }
@@ -456,9 +378,6 @@ struct BusinessProfileScreen: View {
 
 // MARK: - Helpers
 private struct DateFormatItem: Identifiable { let format: String; var id: String { format } }
-private extension Collection {
-    subscript(safe index: Index) -> Element? { indices.contains(index) ? self[index] : nil }
-}
 
 // MARK: - Template Picker Sheet
 struct TemplatePickerSheet: View {
