@@ -112,47 +112,86 @@ struct LoginScreen: View {
 // MARK: - Apple Sign In
 
 struct AppleSignInButton: View {
+    private let delegate = AppleSignInDelegate()
+    
     var body: some View {
-        SignInWithAppleButton(.continue) { request in
-            request.requestedScopes = [.email, .fullName]
-        } onCompletion: { result in
-            handleResult(result)
+        Button {
+            delegate.startSignIn()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "apple.logo")
+                    .font(.body.weight(.medium))
+                Text("Continue with Apple")
+                    .font(.body.weight(.medium))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color.black)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-        .signInWithAppleButtonStyle(.black)
-        .frame(height: 50)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+class AppleSignInDelegate: NSObject,
+    ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding
+{
+    func startSignIn() {
+        let provider = ASAuthorizationAppleIDProvider()
+        let request = provider.createRequest()
+        request.requestedScopes = [.email, .fullName]
+
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        controller.performRequests()
     }
 
-    private func handleResult(_ result: Result<ASAuthorization, Error>) {
-        switch result {
-        case .success(let auth):
-            guard let cred = auth.credential as? ASAuthorizationAppleIDCredential,
-                  let tokenData = cred.identityToken,
-                  let identityToken = String(data: tokenData, encoding: .utf8) else { return }
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+              let window = scene.windows.first(where: { $0.isKeyWindow })
+        else {
+            return UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .flatMap({ $0.windows })
+                .first ?? UIWindow()
+        }
+        return window
+    }
 
-            let fullName = [cred.fullName?.givenName, cred.fullName?.familyName]
-                .compactMap { $0 }.joined(separator: " ")
+    func authorizationController(controller: ASAuthorizationController,
+                                 didCompleteWithAuthorization authorization: ASAuthorization) {
+        guard let cred = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let tokenData = cred.identityToken,
+              let identityToken = String(data: tokenData, encoding: .utf8) else { return }
 
-            Task {
-                do {
-                    try await AuthManager.shared.loginWithApple(
-                        identityToken: identityToken,
-                        fullName: fullName.isEmpty ? nil : fullName,
-                        email: cred.email
-                    )
-                } catch {
-                    #if DEBUG
-                    print("❌ Apple Sign In failed: \(error)")
-                    #endif
-                }
-            }
+        let fullName = [cred.fullName?.givenName, cred.fullName?.familyName]
+            .compactMap { $0 }.joined(separator: " ")
 
-        case .failure(let error):
-            if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+        Task {
+            do {
+                try await AuthManager.shared.loginWithApple(
+                    identityToken: identityToken,
+                    fullName: fullName.isEmpty ? nil : fullName,
+                    email: cred.email
+                )
+            } catch {
                 #if DEBUG
-                print("❌ Apple auth error: \(error)")
+                print("❌ Apple Sign In failed: \(error)")
                 #endif
             }
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController,
+                                 didCompleteWithError error: Error) {
+        if (error as NSError).code != ASAuthorizationError.canceled.rawValue {
+            #if DEBUG
+            print("❌ Apple auth error: \(error)")
+            #endif
         }
     }
 }

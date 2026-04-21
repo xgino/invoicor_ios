@@ -351,4 +351,4 @@ struct InvoiceListScreen: View {
             }
         }
     }
-}cla
+}
