@@ -46,6 +46,7 @@ final class AuthManager {
     // MARK: Published State
     var state: AuthState = .loading
     private(set) var meResponse: MeResponse?
+    var hasBusinessProfile: Bool = false
 
     // MARK: Convenience Accessors
     var currentUser: User?           { meResponse?.user }
@@ -82,6 +83,8 @@ final class AuthManager {
                 MeResponse.self, method: "GET", path: "/accounts/me/"
             )
             meResponse = me
+            await verifyBusinessProfile()
+            
             state = .authenticated
             linkRevenueCat(userId: me.user.publicId)
         } catch let error as APIError {
@@ -121,6 +124,7 @@ final class AuthManager {
         )
         meResponse = me
         state = .authenticated
+        Task { await OnboardingManager.shared.linkToUser() }
         linkRevenueCat(userId: me.user.publicId)
     }
 
@@ -165,6 +169,7 @@ final class AuthManager {
         )
         meResponse = me
         state = .authenticated
+        Task { await OnboardingManager.shared.linkToUser() }
         linkRevenueCat(userId: me.user.publicId)
     }
 
@@ -188,7 +193,33 @@ final class AuthManager {
         )
         meResponse = me
         state = .authenticated
+        Task { await OnboardingManager.shared.linkToUser() }
         linkRevenueCat(userId: me.user.publicId)
+    }
+    
+    // MARK Business Wizzard
+    func verifyBusinessProfile() async {
+        do {
+            // We assume BusinessProfile struct exists based on your wizard code
+            let profiles = try await APIClient.shared.request(
+                [BusinessProfile].self,
+                method: "GET",
+                path: "/accounts/business-profiles/"
+            )
+            
+            await MainActor.run {
+                if let profile = profiles.first,
+                   !profile.companyName.trimmingCharacters(in: .whitespaces).isEmpty {
+                    self.hasBusinessProfile = true
+                } else {
+                    self.hasBusinessProfile = false
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.hasBusinessProfile = false
+            }
+        }
     }
 
     // MARK: - Refresh User Data

@@ -1,15 +1,22 @@
 // Screens/Settings/SettingsScreen.swift
-// Tab 5: Settings — subscription, invoice settings, support, legal, account.
-// Uses consistent card styling matching the rest of the app.
-
 import SwiftUI
+import StoreKit // Critical for native reviews and internal redemption
 
 struct SettingsScreen: View {
     var auth = AuthManager.shared
+    @Environment(\.requestReview) var requestReview // Native Apple Review logic
+    
     @State private var showLogoutConfirm = false
     @State private var showDeleteConfirm = false
     @State private var showPaywall = false
     @State private var showInvoiceSettings = false
+    @State private var showRedeemSheet = false // Controls the native internal redeem UI
+    @State private var copiedCode = false // NEW: Visual feedback for copy
+    
+    // MARK: - App Links & Constants
+    private let appStoreID = "6761840276"
+    private let universalPromoCode = "VIPGIFT"
+    private let shareURL = "https://apps.apple.com/app/id6761840276"
 
     var body: some View {
         ScrollView {
@@ -21,28 +28,29 @@ struct SettingsScreen: View {
                 }
                 .padding(.horizontal, hp).padding(.top, 8)
 
-                // Account info
                 accountSection
-
-                // Subscription
+                inviteSection
                 subscriptionSection
-
-                // Invoice settings
                 invoiceSettingsSection
-
-                // Support
                 supportSection
-
-                // Legal
                 legalSection
-
-                // Danger zone
                 dangerSection
 
-                // App version
-                Text("Invoicor v\(appVersion) • Build \(buildNumber)")
-                    .font(.caption2).foregroundStyle(.quaternary)
-                    .padding(.top, 4).padding(.bottom, 40)
+                // App version & Strong Sales Pitch
+                VStack(spacing: 6) {
+                    Text("Invoicor v\(appVersion)")
+                        .font(.caption.weight(.bold)).foregroundStyle(.tertiary)
+                    Text("Invoices that get you paid. Faster.")
+                        .font(.caption2.weight(.semibold)).foregroundStyle(.quaternary)
+                }
+                .padding(.top, 8).padding(.bottom, 40)
+            }
+        }
+        // MARK: - Internal Native Redemption
+        // This keeps users in the app and allows us to refresh the tier immediately.
+        .offerCodeRedemption(isPresented: $showRedeemSheet) { result in
+            if case .success = result {
+                Task { await auth.refreshMe() }
             }
         }
         .alert("Log Out?", isPresented: $showLogoutConfirm) {
@@ -84,6 +92,62 @@ struct SettingsScreen: View {
         return String(parts.prefix(2)).uppercased()
     }
 
+    // MARK: - Invite Section (Growth)
+
+    private var inviteSection: some View {
+        let shareMessage = "I use Invoicor to manage my business. Use code \(universalPromoCode) for 1 month of Pro free! \(shareURL)"
+        
+        return group(title: "GROWTH") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    icon("gift.fill", color: .purple)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Gift 1 Month of Pro").font(.body.weight(.semibold))
+                        Text("Friends get a free month with your link").font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                
+                HStack(spacing: 10) {
+                    // 1. Copy CODE ONLY with Visual Feedback
+                    Button {
+                        UIPasteboard.general.string = universalPromoCode
+                        withAnimation { copiedCode = true }
+                        Task {
+                            try? await Task.sleep(nanoseconds: 2_000_000_000)
+                            withAnimation { copiedCode = false }
+                        }
+                    } label: {
+                        actionButton(
+                            icon: copiedCode ? "checkmark" : "tag",
+                            text: copiedCode ? "Copied!" : "Copy Code",
+                            bg: copiedCode ? Color.green.opacity(0.15) : Color.primary.opacity(0.05),
+                            fg: copiedCode ? .green : .primary
+                        )
+                    }
+                    
+                    // 2. Share URL
+                    ShareLink(item: URL(string: shareURL)!, message: Text(shareMessage)) {
+                        actionButton(icon: "square.and.arrow.up", text: "Share", bg: .purple, fg: .white)
+                    }
+                }
+            }
+            .padding(12)
+        }
+    }
+    
+    private func actionButton(icon: String, text: String, bg: Color, fg: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(text)
+        }
+        .font(.caption.weight(.bold))
+        .foregroundStyle(fg)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
     // MARK: - Subscription
 
     private var subscriptionSection: some View {
@@ -107,6 +171,16 @@ struct SettingsScreen: View {
                     }
                 }
             }
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            
+            Divider().padding(.leading, 52)
+            
+            // INTERNAL REDEEM CODE (Stays in app)
+            Button {
+                showRedeemSheet = true
+            } label: {
+                row(icon: "tag.fill", color: .green, title: "Redeem Offer Code")
+            }
         }
     }
 
@@ -126,6 +200,7 @@ struct SettingsScreen: View {
                     chevron
                 }
             }
+            .padding(.horizontal, 12).padding(.vertical, 10)
         }
     }
 
@@ -133,6 +208,15 @@ struct SettingsScreen: View {
 
     private var supportSection: some View {
         group(title: "SUPPORT") {
+            // NATIVE REVIEW (Stars pop up inside app)
+            Button {
+                requestReview()
+            } label: {
+                row(icon: "star.fill", color: .yellow, title: "Rate on App Store")
+            }
+            
+            Divider().padding(.leading, 52)
+            
             NavigationLink { ContactScreen() } label: {
                 row(icon: "bubble.left.and.text.bubble.right", color: .blue, title: "Send Feedback")
             }
@@ -141,7 +225,11 @@ struct SettingsScreen: View {
                 row(icon: "clock.arrow.circlepath", color: .teal, title: "My Submissions")
             }
             Divider().padding(.leading, 52)
-            Link(destination: URL(string: "https://invoicor.com/help")!) {
+            Button {
+                if let url = URL(string: "https://invoicor.com/help") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
                 row(icon: "questionmark.circle", color: .green, title: "Help & FAQ")
             }
         }
@@ -151,11 +239,19 @@ struct SettingsScreen: View {
 
     private var legalSection: some View {
         group(title: "LEGAL") {
-            Link(destination: URL(string: "https://invoicor.com/terms")!) {
+            Button {
+                if let url = URL(string: "https://invoicor.com/terms") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
                 row(icon: "doc.text", color: .secondary, title: "Terms of Service")
             }
             Divider().padding(.leading, 52)
-            Link(destination: URL(string: "https://invoicor.com/privacy")!) {
+            Button {
+                if let url = URL(string: "https://invoicor.com/privacy") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
                 row(icon: "lock.shield", color: .secondary, title: "Privacy Policy")
             }
         }
@@ -184,10 +280,10 @@ struct SettingsScreen: View {
     private func group(title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary).tracking(0.5)
-                .padding(.horizontal, hp).padding(.bottom, 8)
+                .padding(.horizontal, hp + 4).padding(.bottom, 8)
             VStack(spacing: 0) { content() }
                 .padding(4).background(Color(.systemGray6).opacity(0.7))
-                .clipShape(RoundedRectangle(cornerRadius: 12)).padding(.horizontal, hp)
+                .clipShape(RoundedRectangle(cornerRadius: 16)).padding(.horizontal, hp)
         }
     }
 
@@ -205,40 +301,39 @@ struct SettingsScreen: View {
     }
 
     private func icon(_ name: String, color: Color) -> some View {
-        Image(systemName: name).font(.body).foregroundStyle(color)
-            .frame(width: 32, height: 32).background(color.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+        Image(systemName: name).font(.system(size: 14, weight: .bold)).foregroundStyle(color)
+            .frame(width: 32, height: 32).background(color.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var chevron: some View {
-        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+        Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(.tertiary)
     }
 
     // MARK: - Helpers
 
     private var planName: String {
         switch auth.currentUser?.tier ?? "free" {
-        case "free": return "Free Plan"; case "starter": return "Starter Plan"
-        case "pro": return "Pro Plan"; case "business": return "Business Plan"
+        case "free": return "Free Plan"; case "pro": return "Pro Plan"
         default: return "Free Plan"
         }
     }
 
     private func usageText(_ usage: UsageInfo) -> String {
         if let l = usage.invoicesLifetimeLimit { return "\(usage.invoicesTotal) of \(l) free invoices used" }
-        if let m = usage.invoicesMonthlyLimit { return "\(usage.invoicesThisMonth) of \(m) invoices this month" }
         return "\(usage.invoicesThisMonth) invoices this month"
     }
 
-    private var appVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0" }
-    private var buildNumber: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1" }
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+    
     private var hp: CGFloat {
         let w = UIScreen.main.bounds.width; if w > 430 { return 24 }; if w > 390 { return 20 }; return 16
     }
 }
 
 // MARK: - Invoice Number Settings Sheet
-
 struct InvoiceNumberSheet: View {
     @Environment(\.dismiss) private var dismiss
     var auth = AuthManager.shared
@@ -253,7 +348,6 @@ struct InvoiceNumberSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Preview
                     VStack(spacing: 6) {
                         Text("Preview").font(.caption).foregroundStyle(.secondary)
                         Text("\(prefix.isEmpty ? "INV" : prefix)-\(String(format: "%05d", Int(nextNumber) ?? 1))")
@@ -270,7 +364,7 @@ struct InvoiceNumberSheet: View {
                         StyledFormField("Next Number", text: $nextNumber, placeholder: "1", keyboard: .numberPad)
                     }
 
-                    Text("The next invoice you create will use this number. Change the prefix to match your previous system (e.g. WR, ACME).")
+                    Text("The next invoice you create will use this number. Change the prefix to match your previous system.")
                         .font(.caption).foregroundStyle(.tertiary).padding(.horizontal, 4)
 
                     if !errorMessage.isEmpty { InlineBanner(message: errorMessage, style: .error) }

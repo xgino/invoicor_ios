@@ -5,6 +5,7 @@ import SwiftUI
 
 struct RootView: View {
     var auth = AuthManager.shared
+    var onboarding = OnboardingManager.shared
     @State private var splashDone = false
 
     var body: some View {
@@ -19,11 +20,17 @@ struct RootView: View {
                     ProgressView("Loading...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case .unauthenticated:
-                    LoginScreen()
-                        .transition(.opacity)
+                    OnboardingFlow()
+                    .transition(.opacity)
+                        
                 case .authenticated:
-                    MainTabView()
-                        .transition(.opacity)
+                    if !auth.hasBusinessProfile {
+                        BusinessWizard()
+                            .transition(.opacity)
+                    } else {
+                        MainTabView()
+                            .transition(.opacity)
+                    }
                 case .error(let message):
                     VStack(spacing: 20) {
                         Image(systemName: "wifi.exclamationmark")
