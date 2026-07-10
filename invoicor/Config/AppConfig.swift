@@ -52,6 +52,14 @@ enum AppConfig {
 
     /// EU data residency endpoint (we're EU-based)
     static let mixpanelServerURL = "https://api-eu.mixpanel.com"
+    
+    // MARK: - Meta SDK (App Events tracking for ad campaigns)
+
+    /// Public App ID — find at developers.facebook.com > Your App > Settings > Basic
+    static let facebookAppID = "1701646444453106"
+
+    /// Client Token — find at developers.facebook.com > Your App > Settings > Advanced
+    static let facebookClientToken = "e53f22c1c54c0c7ab0e058a82f43918c"
 }
 
 

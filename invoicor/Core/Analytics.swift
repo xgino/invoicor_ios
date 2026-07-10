@@ -1,12 +1,6 @@
-//
-//  Analytics.swift
-//  invoicor
-//
-//  Created by Gin on 09/07/2026.
-//
-
 import Foundation
 import Mixpanel
+import FBSDKCoreKit
 
 final class Analytics {
 
@@ -16,15 +10,22 @@ final class Analytics {
     // MARK: - Setup (call once in InvoicorApp)
 
     func configure() {
+        // Mixpanel
         Mixpanel.initialize(
             token: AppConfig.mixpanelToken,
             trackAutomaticEvents: false,
-            serverURL: AppConfig.mixpanelServerURL,
+            serverURL: AppConfig.mixpanelServerURL
         )
 
         #if DEBUG
         Mixpanel.mainInstance().loggingEnabled = true
         #endif
+
+        // Meta SDK - auto-logs installs and sessions
+        ApplicationDelegate.shared.application(
+            UIApplication.shared,
+            didFinishLaunchingWithOptions: nil
+        )
     }
 
     // MARK: - Identity
@@ -37,10 +38,25 @@ final class Analytics {
         Mixpanel.mainInstance().reset()
     }
 
-    // MARK: - Core Funnel Events
+    // MARK: - Track (sends to BOTH Mixpanel + Meta)
 
     func track(_ event: Event, properties: Properties? = nil) {
+        // Mixpanel
         Mixpanel.mainInstance().track(event: event.rawValue, properties: properties)
+
+        // Meta - use standard events where possible for ad optimization
+        switch event {
+        case .appOpened:
+            break // Meta SDK logs this automatically
+        case .invoiceCompleted:
+            AppEvents.shared.logEvent(.completedRegistration)
+        case .paywallShown:
+            AppEvents.shared.logEvent(.initiatedCheckout)
+        case .subscriptionStarted:
+            AppEvents.shared.logEvent(.subscribe)
+        default:
+            AppEvents.shared.logEvent(AppEvents.Name(event.rawValue))
+        }
     }
 
     // MARK: - Event Definitions

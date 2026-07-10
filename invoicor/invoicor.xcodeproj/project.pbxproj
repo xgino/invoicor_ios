@@ -15,6 +15,7 @@
 		338A2B032F88EC4F00745D25 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B022F88EC4F00745D25 /* Products.storekit */; };
 		338A2B092F88F01E00745D25 /* SubscriptionKey_22F4BA53.h8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */; };
 		33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA473000022400FC93E4 /* Mixpanel */; };
+		33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA4D3001289800FC93E4 /* FacebookCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +65,7 @@
 				33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */,
 				338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */,
 				338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */,
+				33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,6 +134,7 @@
 				338A2AF52F86A3A500745D25 /* RevenueCat */,
 				338A2AF72F86A3A500745D25 /* RevenueCatUI */,
 				33C7AA473000022400FC93E4 /* Mixpanel */,
+				33C7AA4D3001289800FC93E4 /* FacebookCore */,
 			);
 			productName = invoicor;
 			productReference = 3355A62A2F7D684500945AED /* invoicor.app */;
@@ -164,6 +167,7 @@
 			packageReferences = (
 				338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */,
 				33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
+				33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3355A62B2F7D684500945AED /* Products */;
@@ -333,7 +337,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = invoicorDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = S8CK7BL3P8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -350,7 +354,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -374,7 +378,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = invoicorRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = S8CK7BL3P8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -391,7 +395,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -448,6 +452,14 @@
 				minimumVersion = 6.5.0;
 			};
 		};
+		33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -465,6 +477,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
 			productName = Mixpanel;
+		};
+		33C7AA4D3001289800FC93E4 /* FacebookCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
