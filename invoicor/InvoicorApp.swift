@@ -11,6 +11,7 @@ struct InvoicorApp: App {
             Purchases.logLevel = .debug
         }
         Purchases.configure(withAPIKey: AppConfig.revenueCatAPIKey)
+        Analytics.shared.configure()
     }
 
     var body: some Scene {

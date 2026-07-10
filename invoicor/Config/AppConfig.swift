@@ -35,13 +35,23 @@ enum AppConfig {
     }
     
     
-   // MARK: - Network Timeouts (used by APIClient)
+    // MARK: - Network Timeouts (used by APIClient)
 
-   /// How long to wait for the server to start responding (seconds).
-   static let requestTimeout: TimeInterval = 30
+    /// How long to wait for the server to start responding (seconds).
+    static let requestTimeout: TimeInterval = 30
 
-   /// How long to allow for the full resource download (seconds).
-   static let resourceTimeout: TimeInterval = 60
+    /// How long to allow for the full resource download (seconds).
+    static let resourceTimeout: TimeInterval = 60
+    
+    // MARK: - Mixpanel Analytics
+
+    /// Public project token — safe to embed in client code (like RevenueCat key)
+    /// Find it: Mixpanel dashboard → Settings → Project Settings → Project Token
+    /// NOTE: Do NOT add the API Secret here — that's for server-side (Django) only
+    static let mixpanelToken = "b0019ec749ec382f074059ac739ad297"
+
+    /// EU data residency endpoint (we're EU-based)
+    static let mixpanelServerURL = "https://api-eu.mixpanel.com"
 }
 
 

@@ -482,6 +482,8 @@ struct CreateInvoiceScreen: View {
                 }
 
                 isLoading = false
+                // ADD THIS LINE:
+                Analytics.shared.track(.invoiceStarted)
             }
         } catch {
             await MainActor.run {
@@ -559,7 +561,10 @@ struct CreateInvoiceScreen: View {
             do {
                 _ = try await APIClient.shared.request(
                     Invoice.self, method: "PUT", path: "/invoices/\(invoiceId)/", body: buildBody())
-                await MainActor.run { isSaving = false; isPresented = false }
+                await MainActor.run {
+                    isSaving = false; isPresented = false
+                    Analytics.shared.track(.invoiceCompleted)
+                }
             } catch {
                 await MainActor.run {
                     errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"; isSaving = false
@@ -575,7 +580,10 @@ struct CreateInvoiceScreen: View {
             do {
                 let result = try await APIClient.shared.request(
                     Invoice.self, method: "POST", path: "/invoices/", body: buildBody())
-                await MainActor.run { savedInvoiceId = result.publicId; isSaving = false; showPreview = true }
+                await MainActor.run {
+                    savedInvoiceId = result.publicId; isSaving = false; showPreview = true
+                    Analytics.shared.track(.invoiceCompleted)
+                }
             } catch let error as APIError {
                 if case .limitReached = error {
                     await MainActor.run { isSaving = false; showPaywall = true }

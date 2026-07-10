@@ -252,7 +252,10 @@ struct InvoiceDetailScreen: View {
               let root = scene.windows.first?.rootViewController else { return }
         let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         vc.completionWithItemsHandler = { _, completed, _, _ in
-            if completed, let inv = self.invoice, inv.status.lowercased() == "draft" { self.updateStatus("sent") }
+            if completed {
+                Analytics.shared.track(.invoiceShared)
+                if let inv = self.invoice, inv.status.lowercased() == "draft" { self.updateStatus("sent") }
+            }
         }
         var presenter = root
         while let p = presenter.presentedViewController { presenter = p }

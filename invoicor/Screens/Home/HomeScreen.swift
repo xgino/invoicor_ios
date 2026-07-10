@@ -351,7 +351,10 @@ struct HomeScreen: View {
             .padding(.bottom, 32)
         }
         .navigationTitle("Dashboard")
-        .onAppear { Task { await loadData() } }
+        .onAppear {
+            Analytics.shared.track(.appOpened)
+            Task { await loadData() }
+        }
         .refreshable { await loadData() }
     }
 

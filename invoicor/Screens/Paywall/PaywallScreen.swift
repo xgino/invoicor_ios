@@ -49,6 +49,7 @@ struct DirectPaywallView: View {
             } else if let offering {
                 PaywallView(offering: offering, displayCloseButton: true)
                     .onPurchaseCompleted { _ in
+                        Analytics.shared.track(.subscriptionStarted)
                         Task { await auth.refreshMe() }
                         onDismiss()
                     }
@@ -60,7 +61,10 @@ struct DirectPaywallView: View {
                 planNotAvailableView
             }
         }
-        .task { await loadOffering() }
+        .task {
+            Analytics.shared.track(.paywallShown)
+            await loadOffering()
+        }
     }
 
     private func loadOffering() async {

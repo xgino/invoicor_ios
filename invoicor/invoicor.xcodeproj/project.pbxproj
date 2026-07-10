@@ -14,6 +14,7 @@
 		338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 338A2AF72F86A3A500745D25 /* RevenueCatUI */; };
 		338A2B032F88EC4F00745D25 /* Products.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B022F88EC4F00745D25 /* Products.storekit */; };
 		338A2B092F88F01E00745D25 /* SubscriptionKey_22F4BA53.h8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */; };
+		33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA473000022400FC93E4 /* Mixpanel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -60,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */,
 				338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */,
 				338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */,
 			);
@@ -129,6 +131,7 @@
 			packageProductDependencies = (
 				338A2AF52F86A3A500745D25 /* RevenueCat */,
 				338A2AF72F86A3A500745D25 /* RevenueCatUI */,
+				33C7AA473000022400FC93E4 /* Mixpanel */,
 			);
 			productName = invoicor;
 			productReference = 3355A62A2F7D684500945AED /* invoicor.app */;
@@ -160,6 +163,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */,
+				33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3355A62B2F7D684500945AED /* Products */;
@@ -436,6 +440,14 @@
 				minimumVersion = 5.67.1;
 			};
 		};
+		33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mixpanel/mixpanel-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.5.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -448,6 +460,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 338A2AF42F86A3A500745D25 /* XCRemoteSwiftPackageReference "purchases-ios" */;
 			productName = RevenueCatUI;
+		};
+		33C7AA473000022400FC93E4 /* Mixpanel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */;
+			productName = Mixpanel;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
