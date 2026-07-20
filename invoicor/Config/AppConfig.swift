@@ -60,6 +60,10 @@ enum AppConfig {
 
     /// Client Token — find at developers.facebook.com > Your App > Settings > Advanced
     static let facebookClientToken = "e53f22c1c54c0c7ab0e058a82f43918c"
+    
+    // MARK: - GoMarketMe Affiliate
+    static let goMarketMeApiKey = "0Xe8B4BrqH2pDCyRdPUXP8kkOg4zOWsB8YKW5tlO"
+    
 }
 
 

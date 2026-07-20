@@ -1,5 +1,5 @@
 {
-  "originHash" : "74aa89921592d1a195a2951867dc7e33d8d95b0d831fbae6708c2c4ee7343de7",
+  "originHash" : "193e2115757e90c288bafab17ae7a13a5c073f9063efea2e6a245942b360ca4e",
   "pins" : [
     {
       "identity" : "facebook-ios-sdk",
@@ -8,6 +8,15 @@
       "state" : {
         "branch" : "main",
         "revision" : "c00e9e0e86f0d6a89cb069f09a882d8ab3099744"
+      }
+    },
+    {
+      "identity" : "gomarketme-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GoMarketMe/gomarketme-swift.git",
+      "state" : {
+        "revision" : "59c38965c5d26643c53877adff77af447d175efc",
+        "version" : "5.0.4"
       }
     },
     {

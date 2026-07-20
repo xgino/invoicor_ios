@@ -11,6 +11,7 @@
 import SwiftUI
 import RevenueCat
 import RevenueCatUI
+import GoMarketMe
 
 struct PaywallScreen: View {
     var tier: String? = nil
@@ -50,7 +51,10 @@ struct DirectPaywallView: View {
                 PaywallView(offering: offering, displayCloseButton: true)
                     .onPurchaseCompleted { _ in
                         Analytics.shared.track(.subscriptionStarted)
-                        Task { await auth.refreshMe() }
+                        Task {
+                            _ = await GoMarketMe.shared.syncAllTransactions()
+                            await auth.refreshMe()
+                        }
                         onDismiss()
                     }
                     .onRestoreCompleted { _ in

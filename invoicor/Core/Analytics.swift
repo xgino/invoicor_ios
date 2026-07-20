@@ -1,6 +1,7 @@
 import Foundation
 import Mixpanel
 import FBSDKCoreKit
+import GoMarketMe
 
 final class Analytics {
 
@@ -26,6 +27,9 @@ final class Analytics {
             UIApplication.shared,
             didFinishLaunchingWithOptions: nil
         )
+        
+        // GoMarketMe Affiliate
+        GoMarketMe.shared.initialize(apiKey: AppConfig.goMarketMeApiKey)
     }
 
     // MARK: - Identity
