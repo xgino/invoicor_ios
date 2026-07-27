@@ -142,6 +142,12 @@ final class AuthManager {
         )
         // login() handles token storage, /me fetch, and RevenueCat linking
         try await login(email: email, password: password)
+        
+        // Push notifications (new user only)
+        NotificationManager.shared.requestPermission()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            NotificationManager.shared.schedulePostRegistration()
+        }
     }
 
     // MARK: - Apple Sign In

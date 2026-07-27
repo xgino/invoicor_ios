@@ -54,10 +54,12 @@ final class Analytics {
             break // Meta SDK logs this automatically
         case .invoiceCompleted:
             AppEvents.shared.logEvent(.completedRegistration)
+            NotificationManager.shared.onInvoiceCreated()
         case .paywallShown:
             AppEvents.shared.logEvent(.initiatedCheckout)
         case .subscriptionStarted:
             AppEvents.shared.logEvent(.subscribe)
+            NotificationManager.shared.onSubscribed()
         default:
             AppEvents.shared.logEvent(AppEvents.Name(event.rawValue))
         }
@@ -72,5 +74,7 @@ final class Analytics {
         case invoiceShared       = "invoice_shared"
         case paywallShown        = "paywall_shown"
         case subscriptionStarted = "subscription_started"
+        case notificationPermission = "notification_permission"
+        case notificationScheduled  = "notification_scheduled"
     }
 }
