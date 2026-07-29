@@ -46,6 +46,16 @@ struct SettingsScreen: View {
                 .padding(.top, 8).padding(.bottom, 40)
             }
         }
+        // Notification Ask allowed or not
+        .onAppear {
+            if !UserDefaults.standard.bool(forKey: "notifications_requested") {
+                UserDefaults.standard.set(true, forKey: "notifications_requested")
+                NotificationManager.shared.requestPermission()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    NotificationManager.shared.schedulePostRegistration()
+                }
+            }
+        }
         // MARK: - Internal Native Redemption
         // This keeps users in the app and allows us to refresh the tier immediately.
         .offerCodeRedemption(isPresented: $showRedeemSheet) { result in
