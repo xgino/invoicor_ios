@@ -362,8 +362,8 @@ struct BusinessProfileScreen: View {
                     withAnimation { successMessage = "Profile saved" }
                 }
                 await AuthManager.shared.refreshMe()
-                try? await Task.sleep(nanoseconds: 3_000_000_000)
-                await MainActor.run { withAnimation { successMessage = "" } }
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                await MainActor.run { dismiss() }
             } catch {
                 await MainActor.run {
                     errorMessage = (error as? APIError)?.errorDescription ?? "Failed to save"
