@@ -39,26 +39,20 @@ enum ReviewManager {
     // we use 90 for our gate since gate != Apple popup)
     private static let minDaysBetween = 90
 
-    /// Call this every time an invoice status changes to "paid".
-    /// Safe to call multiple times. Only triggers at milestones.
-    static func invoicePaid() {
-        let defaults = UserDefaults.standard
-        let newCount = defaults.integer(forKey: paidCountKey) + 1
-        defaults.set(newCount, forKey: paidCountKey)
+    /// Call with the REAL paid invoice count from API data.
+    static func checkMilestone(paidCount: Int) {
+        guard milestones.contains(paidCount) else { return }
 
-        // Only show gate at milestone counts
-        guard milestones.contains(newCount) else { return }
-
-        // Don't prompt too frequently (except first milestone)
-        if newCount > 1, let lastDate = defaults.object(forKey: lastPromptKey) as? Date {
+        if paidCount > 1, let lastDate = UserDefaults.standard.object(
+            forKey: lastPromptKey
+        ) as? Date {
             let daysSince = Calendar.current.dateComponents(
                 [.day], from: lastDate, to: Date()
             ).day ?? 0
             guard daysSince >= minDaysBetween else { return }
         }
 
-        // Post notification → root view shows ReviewGateSheet
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             NotificationCenter.default.post(
                 name: .showReviewGate, object: nil
             )

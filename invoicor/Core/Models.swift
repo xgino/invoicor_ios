@@ -156,6 +156,7 @@ struct UsageInfo: Codable, Equatable, Sendable {
     let invoicesMonthlyLimit: Int?
     let invoicesTotal: Int
     let invoicesLifetimeLimit: Int?
+    let invoicesPaid: Int?
 
     /// Whether the user has hit their monthly invoice limit.
     var isMonthlyLimitReached: Bool {

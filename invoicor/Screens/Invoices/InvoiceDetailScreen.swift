@@ -283,7 +283,13 @@ struct InvoiceDetailScreen: View {
                 await MainActor.run {
                     invoice = updated; if let newHtml { htmlContent = newHtml }
                     isUpdating = false; statusMessage = "Marked as \(newStatus.capitalized)"
-                    if newStatus == "paid" { ReviewManager.invoicePaid() }
+                    if newStatus == "paid" {
+                        Task {
+                            await AuthManager.shared.refreshMe()
+                            let paidCount = AuthManager.shared.usage?.invoicesPaid ?? 0
+                            ReviewManager.checkMilestone(paidCount: paidCount)
+                        }
+                    }
                 }
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 await MainActor.run { withAnimation { statusMessage = "" } }

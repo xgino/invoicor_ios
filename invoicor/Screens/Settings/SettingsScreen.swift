@@ -4,10 +4,10 @@ import StoreKit // Critical for native reviews and internal redemption
 
 struct SettingsScreen: View {
     var auth = AuthManager.shared
-    @Environment(\.requestReview) var requestReview // Native Apple Review logic
     
     @State private var showLogoutConfirm = false
     @State private var showDeleteConfirm = false
+    @State private var showFinalDeleteConfirm = false
     @State private var showPaywall = false
     @State private var showInvoiceSettings = false
     @State private var showRedeemSheet = false // Controls the native internal redeem UI
@@ -46,16 +46,6 @@ struct SettingsScreen: View {
                 .padding(.top, 8).padding(.bottom, 40)
             }
         }
-        // Notification Ask allowed or not
-        .onAppear {
-            if !UserDefaults.standard.bool(forKey: "notifications_requested") {
-                UserDefaults.standard.set(true, forKey: "notifications_requested")
-                NotificationManager.shared.requestPermission()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    NotificationManager.shared.schedulePostRegistration()
-                }
-            }
-        }
         // MARK: - Internal Native Redemption
         // This keeps users in the app and allows us to refresh the tier immediately.
         .offerCodeRedemption(isPresented: $showRedeemSheet) { result in
@@ -68,9 +58,17 @@ struct SettingsScreen: View {
             Button("Cancel", role: .cancel) {}
         } message: { Text("You'll need to sign in again.") }
         .alert("Delete Account?", isPresented: $showDeleteConfirm) {
-            Button("Delete Everything", role: .destructive) { Task { try? await auth.deleteAccount() } }
+            Button("Yes, Delete Everything", role: .destructive) { showFinalDeleteConfirm = true }
             Button("Cancel", role: .cancel) {}
-        } message: { Text("This permanently deletes your account and all invoices. This cannot be undone.") }
+        } message: {
+            Text("This will permanently delete your account, all invoices, clients, and business data. This cannot be undone.")
+        }
+        .alert("Are you absolutely sure?", isPresented: $showFinalDeleteConfirm) {
+            Button("Permanently Delete", role: .destructive) { Task { try? await auth.deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Last chance. All your data will be gone forever.")
+        }
         .sheet(isPresented: $showPaywall) { PaywallScreen() }
         .sheet(isPresented: $showInvoiceSettings) { InvoiceNumberSheet() }
     }
@@ -218,9 +216,9 @@ struct SettingsScreen: View {
 
     private var supportSection: some View {
         group(title: "SUPPORT") {
-            // NATIVE REVIEW (Stars pop up inside app)
+            // Ask ReviewGate Manager popup
             Button {
-                requestReview()
+                ReviewManager.requestReview()
             } label: {
                 row(icon: "star.fill", color: .yellow, title: "Rate on App Store")
             }
