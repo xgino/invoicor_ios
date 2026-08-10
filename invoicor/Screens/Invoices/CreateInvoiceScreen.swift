@@ -78,6 +78,9 @@ struct CreateInvoiceScreen: View {
 
     @State private var showClientPicker = false
     @State private var showAddItem = false
+    @State private var showTemplatePicker = false
+    @State private var templates: [InvoiceTemplate] = []
+    
     @State private var isLoading = true
     @State private var isSaving = false
     @State private var errorMessage = ""
@@ -209,6 +212,9 @@ struct CreateInvoiceScreen: View {
             .sheet(isPresented: $showAddItem) {
                 AddItemSheet(currencySymbol: currencySymbol) { newItem in items.append(newItem) }
             }
+            .sheet(isPresented: $showTemplatePicker) {
+                TemplatePickerSheet(templates: templates, selected: $templateSlug)
+            }
             .navigationDestination(isPresented: $showPreview) {
                 if let invoiceId = savedInvoiceId {
                     InvoiceDetailScreen(invoiceId: invoiceId)
@@ -307,6 +313,9 @@ struct CreateInvoiceScreen: View {
 
     private var detailsSection: some View {
         FormSection(title: "Details") {
+            FormTappableRow(label: "Template",
+                displayText: templates.first(where: { $0.slug == templateSlug })?.name ?? templateSlug
+            ) { showTemplatePicker = true }
             DatePicker("Issue Date", selection: $issueDate, displayedComponents: .date)
             DatePicker("Due Date", selection: $dueDate, displayedComponents: .date)
             FormPicker(
@@ -452,10 +461,12 @@ struct CreateInvoiceScreen: View {
             async let lReq = APIClient.shared.request([Language].self, method: "GET", path: "/invoices/languages/")
             async let clReq = APIClient.shared.request([Client].self, method: "GET", path: "/accounts/clients/")
             async let pReq = APIClient.shared.request([BusinessProfile].self, method: "GET", path: "/accounts/business-profiles/")
+            async let tmplReq = APIClient.shared.request([InvoiceTemplate].self, method: "GET", path: "/invoices/templates/")
             let (c, l, cl, p) = try await (cReq, lReq, clReq, pReq)
+            let t = try await tmplReq
 
             await MainActor.run {
-                currencies = c; languages = l; clients = cl; businessProfiles = p
+                currencies = c; languages = l; clients = cl; businessProfiles = p; templates = t
 
                 if let source = sourceInvoice {
                     prefillFromInvoice(source)
