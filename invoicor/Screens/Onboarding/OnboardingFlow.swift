@@ -11,28 +11,29 @@ private extension Color {
 
 // MARK: - Locale Currency Helper
 private struct LocaleInvoice {
-    static var currencySymbol: String {
-        let code = Locale.current.currency?.identifier ?? "USD"
-        let map: [String: String] = [
-            "GBP": "£", "EUR": "€", "USD": "$",
-            "CAD": "CA$", "AUD": "A$", "CHF": "CHF",
-            "SEK": "kr", "NOK": "kr", "DKK": "kr",
-            "PLN": "zł", "CZK": "Kč",
-        ]
-        return map[code] ?? "$"
+    static var currencyCode: String {
+        Locale.current.currency?.identifier ?? "USD"
+    }
+
+    static func format(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currencyCode
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 2
+        return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
     }
 
     static var sampleItems: [(String, String)] {
-        let s = currencySymbol
         return [
-            ("Bathroom renovation", "\(s)1,850.00"),
-            ("Kitchen fitting", "\(s)2,400.00"),
-            ("Boiler service", "\(s)350.00"),
+            ("Bathroom renovation", format(1850.00)),
+            ("Kitchen fitting", format(2400.00)),
+            ("Boiler service", format(350.00)),
         ]
     }
 
     static var sampleTotal: String {
-        "\(currencySymbol)4,600.00"
+        format(4600.00)
     }
 }
 
