@@ -1,16 +1,39 @@
 // =================================================================
 // FILE: Screens/Onboarding/OnboardingFlow.swift
 // =================================================================
-// Simplified 2-screen onboarding: ICP question → Start Free
-// Removed: Pain, Solution, Templates, Pricing screens
-// Why: 36% of users dropped at pricing screen. 82% total drop-off.
-
 import SwiftUI
 
 // MARK: - Brand Colors
 private extension Color {
     static let brandBlue = Color(red: 0.23, green: 0.51, blue: 0.96)
     static let brandIndigo = Color(red: 0.35, green: 0.34, blue: 0.84)
+}
+
+// MARK: - Locale Currency Helper
+private struct LocaleInvoice {
+    static var currencySymbol: String {
+        let code = Locale.current.currency?.identifier ?? "USD"
+        let map: [String: String] = [
+            "GBP": "£", "EUR": "€", "USD": "$",
+            "CAD": "CA$", "AUD": "A$", "CHF": "CHF",
+            "SEK": "kr", "NOK": "kr", "DKK": "kr",
+            "PLN": "zł", "CZK": "Kč",
+        ]
+        return map[code] ?? "$"
+    }
+
+    static var sampleItems: [(String, String)] {
+        let s = currencySymbol
+        return [
+            ("Bathroom renovation", "\(s)1,850.00"),
+            ("Kitchen fitting", "\(s)2,400.00"),
+            ("Boiler service", "\(s)350.00"),
+        ]
+    }
+
+    static var sampleTotal: String {
+        "\(currencySymbol)4,600.00"
+    }
 }
 
 // MARK: - Ambient Background
@@ -58,7 +81,6 @@ struct OnboardingFlow: View {
             AmbientBackground()
 
             VStack(spacing: 0) {
-                // Top bar: dots + login
                 HStack(spacing: 0) {
                     HStack(spacing: 8) {
                         ForEach(0..<2, id: \.self) { i in
@@ -72,9 +94,7 @@ struct OnboardingFlow: View {
                                 .animation(.spring(response: 0.4), value: step)
                         }
                     }
-
                     Spacer()
-
                     Button("Log in") { showLogin = true }
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
@@ -82,10 +102,9 @@ struct OnboardingFlow: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
 
-                // Screens
                 TabView(selection: $step) {
-                    ICPScreen { icp in
-                        ob.trackStep("icp_selected", icp: icp)
+                    ValueScreen {
+                        ob.trackStep("value_seen")
                         withAnimation { step = 1 }
                     }.tag(0)
 
@@ -102,109 +121,215 @@ struct OnboardingFlow: View {
     }
 }
 
-// MARK: - Screen 1: ICP Selection
-private struct ICPScreen: View {
-    let onSelect: (String) -> Void
-    private let ob = OnboardingManager.shared
+// MARK: - Screen 1: Value Showcase
+private struct ValueScreen: View {
+    let onContinue: () -> Void
     @State private var appeared = false
-
-    private var options: [OnboardingOption] {
-        ob.config?.screens.first(where: { $0.id == "icp_select" })?.options ?? [
-            OnboardingOption(key: "trades", title: "I do jobs for clients", subtitle: "Plumbing, electrical, cleaning, painting", icon: "wrench.and.screwdriver"),
-            OnboardingOption(key: "freelance", title: "I freelance or consult", subtitle: "Design, dev, writing, photography", icon: "laptopcomputer"),
-            OnboardingOption(key: "business", title: "I run a small business", subtitle: "Agency, studio, practice", icon: "building.2"),
-            OnboardingOption(key: "exploring", title: "Just checking it out", subtitle: "", icon: "sparkles"),
-        ]
-    }
-
-    private let iconColors: [String: Color] = [
-        "trades": .orange,
-        "freelance": .indigo,
-        "business": .blue,
-        "exploring": .purple,
-    ]
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            // App logo
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.brandBlue.opacity(0.12), .clear],
-                            center: .center, startRadius: 10, endRadius: 55
+            // Speed claim
+            VStack(spacing: 4) {
+                Text("Send professional invoices")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(.primary)
+
+                Text("and get paid faster")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.brandBlue, Color.brandIndigo],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
                     )
-                    .frame(width: 100, height: 100)
-
-                Image("AppLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: .brandBlue.opacity(0.3), radius: 12, y: 4)
-                    .scaleEffect(appeared ? 1 : 0.5)
-                    .opacity(appeared ? 1 : 0)
             }
+            .multilineTextAlignment(.center)
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 20)
             .padding(.bottom, 24)
 
-            Text(ob.config?.screens.first(where: { $0.id == "icp_select" })?.headline
-                 ?? "What do you need invoices for?")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+            // Invoice preview card (locale currency)
+            InvoicePreviewCard()
                 .opacity(appeared ? 1 : 0)
-                .offset(y: appeared ? 0 : 20)
+                .scaleEffect(appeared ? 1 : 0.9)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 24)
 
-            VStack(spacing: 10) {
-                ForEach(Array(options.enumerated()), id: \.element.key) { index, opt in
-                    Button { onSelect(opt.key) } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: opt.icon)
-                                .font(.title3)
-                                .foregroundStyle(iconColors[opt.key] ?? .primary)
-                                .frame(width: 42, height: 42)
-                                .background((iconColors[opt.key] ?? .primary).opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+            // Proof points (outcomes not features)
+            VStack(spacing: 12) {
+                ProofRow(
+                    icon: "clock.fill",
+                    color: .orange,
+                    text: "Stop formatting in Word, Docs, or Excel"
+                )
+                ProofRow(
+                    icon: "globe",
+                    color: .blue,
+                    text: "Multi currencies. 6+ languages. Your client reads it in theirs"
+                )
+                ProofRow(
+                    icon: "arrow.counterclockwise",
+                    color: .green,
+                    text: "Reuse clients and products. Repeating invoice takes seconds"
+                )
+                ProofRow(
+                    icon: "doc.richtext.fill",
+                    color: .purple,
+                    text: "30+ templates. Add your logo. Look professional instantly"
+                )
+            }
+            .padding(.horizontal, 28)
+            .opacity(appeared ? 1 : 0)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(opt.title)
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.primary)
-                                if !opt.subtitle.isEmpty {
-                                    Text(opt.subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
+            Spacer()
 
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(.tertiary)
-                        }
-                        .padding(14)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color(.separator).opacity(0.3)))
-                    }
-                    .opacity(appeared ? 1 : 0)
-                    .offset(y: appeared ? 0 : 30)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(Double(index) * 0.08), value: appeared)
-                }
+            // CTA
+            Button(action: onContinue) {
+                Text("See how it works")
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 17)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.brandBlue, Color.brandIndigo],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: Color.brandBlue.opacity(0.3), radius: 16, y: 6)
             }
             .padding(.horizontal, 24)
-
-            Spacer()
-            Spacer()
+            .padding(.bottom, 48)
         }
         .onAppear {
             withAnimation(.spring(response: 0.7)) { appeared = true }
+        }
+    }
+}
+
+// MARK: - Invoice Preview Card
+private struct InvoicePreviewCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("INVOICE")
+                        .font(.system(size: 10, weight: .heavy))
+                        .tracking(2)
+                        .foregroundStyle(Color.brandBlue)
+                    Text("INV-00047")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                // Fake logo
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.brandBlue.opacity(0.15))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color.brandBlue)
+                    )
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+
+            Divider().padding(.horizontal, 12)
+
+            // Line items (locale currency)
+            VStack(spacing: 6) {
+                ForEach(LocaleInvoice.sampleItems, id: \.0) { item in
+                    InvoiceLineRow(item: item.0, amount: item.1)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+
+            Divider().padding(.horizontal, 12)
+
+            // Total
+            HStack {
+                Text("Total")
+                    .font(.system(size: 13, weight: .bold))
+                Spacer()
+                Text(LocaleInvoice.sampleTotal)
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(Color.brandBlue)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+
+            // Status badge
+            HStack {
+                Spacer()
+                Text("SENT")
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(1)
+                    .foregroundStyle(.green)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.green.opacity(0.1))
+                    .clipShape(Capsule())
+                Spacer()
+            }
+            .padding(.bottom, 10)
+        }
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.separator).opacity(0.2))
+        )
+        .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
+    }
+}
+
+private struct InvoiceLineRow: View {
+    let item: String
+    let amount: String
+
+    var body: some View {
+        HStack {
+            Text(item)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.primary)
+            Spacer()
+            Text(amount)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Proof Row
+private struct ProofRow: View {
+    let icon: String
+    let color: Color
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(color)
+                .frame(width: 32, height: 32)
+                .background(color.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
         }
     }
 }
@@ -214,22 +339,13 @@ private struct StartFreeScreen: View {
     let onGetStarted: () -> Void
     @State private var showRegister = false
     @State private var appeared = false
-    @State private var checkmarks: Int = -1
-
-    private let features: [(String, String)] = [
-        ("doc.text.fill", "Professional templates"),
-        ("dollarsign.circle.fill", "Multi-currency support"),
-        ("square.and.arrow.up.fill", "PDF export and sharing"),
-        ("person.2.fill", "Saved clients and products"),
-        ("bolt.fill", "Create an invoice in 30 seconds"),
-    ]
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
             // Badge
-            Text("3 INVOICES ON US")
+            Text("3 FREE INVOICES")
                 .font(.system(size: 11, weight: .heavy))
                 .tracking(1.5)
                 .foregroundStyle(Color.brandBlue)
@@ -241,51 +357,49 @@ private struct StartFreeScreen: View {
                 .padding(.bottom, 20)
 
             // Headline
-            Text("Start free")
-                .font(.system(size: 32, weight: .bold))
+            Text("Create your first invoice")
+                .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
                 .opacity(appeared ? 1 : 0)
+                .padding(.bottom, 8)
 
-            Text("No card needed. No time limit.")
+            Text("No card needed. Takes about a minute.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .padding(.top, 4)
-                .padding(.bottom, 36)
                 .opacity(appeared ? 1 : 0)
+                .padding(.bottom, 32)
 
-            // Feature checklist
-            VStack(alignment: .leading, spacing: 16) {
-                ForEach(Array(features.enumerated()), id: \.offset) { i, feature in
-                    HStack(spacing: 14) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(
-                                    checkmarks >= i
-                                    ? Color.blue.opacity(0.1)
-                                    : Color(.systemGray6)
-                                )
-                                .frame(width: 36, height: 36)
-
-                            Image(systemName: checkmarks >= i ? "checkmark" : feature.0)
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(
-                                    checkmarks >= i
-                                    ? .blue
-                                    : Color(.systemGray4)
-                                )
-                        }
-                        .scaleEffect(checkmarks == i ? 1.15 : 1)
-
-                        Text(feature.1)
-                            .font(.body.weight(.medium))
-                            .foregroundStyle(
-                                checkmarks >= i ? .primary : .quaternary
-                            )
-                    }
-                    .animation(.spring(response: 0.35).delay(Double(i) * 0.08), value: checkmarks)
-                }
+            // What you get
+            VStack(spacing: 14) {
+                TrustRow(
+                    icon: "checkmark.seal.fill",
+                    color: .blue,
+                    text: "30+ professional templates with your logo"
+                )
+                TrustRow(
+                    icon: "function",
+                    color: .orange,
+                    text: "Tax, discounts, and totals auto-calculated"
+                )
+                TrustRow(
+                    icon: "square.and.arrow.up.fill",
+                    color: .purple,
+                    text: "Export PDF or share via any app"
+                )
+                TrustRow(
+                    icon: "chart.bar.fill",
+                    color: .green,
+                    text: "Track sent, draft, and paid invoices"
+                )
+                TrustRow(
+                    icon: "lock.shield.fill",
+                    color: .gray,
+                    text: "GDPR compliant. Data in Europe. No ads."
+                )
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 28)
+            .opacity(appeared ? 1 : 0)
 
             Spacer()
 
@@ -295,20 +409,20 @@ private struct StartFreeScreen: View {
                     onGetStarted()
                     showRegister = true
                 } label: {
-                    Text("Start Free")
+                    Text("Create my first invoice")
                         .font(.body.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 17)
                         .background(
                             LinearGradient(
-                                colors: [.brandBlue, .brandIndigo],
+                                colors: [Color.brandBlue, Color.brandIndigo],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: .brandBlue.opacity(0.3), radius: 16, y: 6)
+                        .shadow(color: Color.brandBlue.opacity(0.3), radius: 16, y: 6)
                 }
 
                 Button {
@@ -325,11 +439,31 @@ private struct StartFreeScreen: View {
         .sheet(isPresented: $showRegister) { RegisterScreen() }
         .onAppear {
             withAnimation(.spring(response: 0.6)) { appeared = true }
-            for i in features.indices {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3 + Double(i) * 0.2) {
-                    withAnimation { checkmarks = i }
-                }
-            }
+        }
+    }
+}
+
+// MARK: - Trust Row
+private struct TrustRow: View {
+    let icon: String
+    let color: Color
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(color)
+                .frame(width: 32, height: 32)
+                .background(color.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
         }
     }
 }
