@@ -54,9 +54,6 @@ final class NotificationManager {
     
     // MARK: - After Invoice Created
     // Call every time an invoice is saved
-    //
-    // WHERE: Wherever you call Analytics.shared.track(.invoiceCompleted)
-    //   NotificationManager.shared.onInvoiceCreated(count: invoiceCount)
     
     func onInvoiceCreated() {
         // Track count internally
@@ -91,9 +88,6 @@ final class NotificationManager {
     
     // MARK: - After Subscription
     // Call when user subscribes
-    //
-    // WHERE: Wherever you call Analytics.shared.track(.subscriptionStarted)
-    //   NotificationManager.shared.onSubscribed()
     
     func onSubscribed() {
         cancelAll()

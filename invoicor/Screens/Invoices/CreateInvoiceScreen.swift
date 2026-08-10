@@ -563,7 +563,6 @@ struct CreateInvoiceScreen: View {
                     Invoice.self, method: "PUT", path: "/invoices/\(invoiceId)/", body: buildBody())
                 await MainActor.run {
                     isSaving = false; isPresented = false
-                    Analytics.shared.track(.invoiceCompleted)
                 }
             } catch {
                 await MainActor.run {
@@ -582,7 +581,6 @@ struct CreateInvoiceScreen: View {
                     Invoice.self, method: "POST", path: "/invoices/", body: buildBody())
                 await MainActor.run {
                     savedInvoiceId = result.publicId; isSaving = false; showPreview = true
-                    Analytics.shared.track(.invoiceCompleted)
                 }
             } catch let error as APIError {
                 if case .limitReached = error {

@@ -50,7 +50,6 @@ struct DirectPaywallView: View {
             } else if let offering {
                 PaywallView(offering: offering, displayCloseButton: true)
                     .onPurchaseCompleted { _ in
-                        Analytics.shared.track(.subscriptionStarted)
                         Task {
                             _ = await GoMarketMe.shared.syncAllTransactions()
                             await auth.refreshMe()

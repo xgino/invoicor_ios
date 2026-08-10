@@ -253,7 +253,6 @@ struct InvoiceDetailScreen: View {
         let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         vc.completionWithItemsHandler = { _, completed, _, _ in
             if completed {
-                Analytics.shared.track(.invoiceShared)
                 if let inv = self.invoice, inv.status.lowercased() == "draft" { self.updateStatus("sent") }
             }
         }

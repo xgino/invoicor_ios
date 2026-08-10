@@ -42,39 +42,60 @@ final class Analytics {
         Mixpanel.mainInstance().reset()
     }
 
-    // MARK: - Track (sends to BOTH Mixpanel + Meta)
+    // MARK: - Track
+    //
+    // WHERE EACH EVENT LIVES:
+    //
+    // iOS only (Mixpanel + Meta):
+    //   app_opened            → Mixpanel only, Meta logs automatically
+    //   invoice_started       → Mixpanel + Meta (completedRegistration)
+    //   paywall_shown         → Mixpanel + Meta (initiatedCheckout)
+    //   notification_permission → Mixpanel only
+    //   notification_scheduled  → Mixpanel only
+    //
+    // Django only (AppEvent model, NOT tracked here):
+    //   invoice_created       → API fires on save
+    //   invoice_sent          → API fires on status change
+    //   invoice_paid          → API fires on status change
+    //   invoice_duplicated    → API fires on duplicate
+    //   pdf_exported          → API fires on export
+    //   client_created        → API fires on save
+    //   product_created       → API fires on save
+    //   profile_created       → API fires on save
+    //   feedback_submitted    → API fires on save
+    //   subscription_started  → RevenueCat webhook
+    //   subscription_cancelled → RevenueCat webhook
+    //   paywall_hit           → API fires on limit reached
+    //   onboarding_step       → API fires via OnboardingManager
+    //
 
     func track(_ event: Event, properties: Properties? = nil) {
-        // Mixpanel
-        Mixpanel.mainInstance().track(event: event.rawValue, properties: properties)
+            // ── Mixpanel (all iOS events) ──
+            Mixpanel.mainInstance().track(event: event.rawValue, properties: properties)
 
-        // Meta - use standard events where possible for ad optimization
-        switch event {
-        case .appOpened:
-            break // Meta SDK logs this automatically
-        case .invoiceCompleted:
-            AppEvents.shared.logEvent(.completedRegistration)
-            NotificationManager.shared.onInvoiceCreated()
-        case .paywallShown:
-            AppEvents.shared.logEvent(.initiatedCheckout)
-        case .subscriptionStarted:
-            AppEvents.shared.logEvent(.subscribe)
-            NotificationManager.shared.onSubscribed()
-        default:
-            AppEvents.shared.logEvent(AppEvents.Name(event.rawValue))
+            // ── Meta (only specific events for ad optimization) ──
+            switch event {
+            case .appOpened:
+                break // Meta SDK auto-logs sessions
+            case .invoiceStarted:
+                // Tells Meta "user took a key action" → optimizes for these users
+                AppEvents.shared.logEvent(.completedRegistration)
+                NotificationManager.shared.onInvoiceCreated()
+            case .paywallShown:
+                // Tells Meta "user is close to purchase" → optimizes for these users
+                AppEvents.shared.logEvent(.initiatedCheckout)
+            case .notificationPermission, .notificationScheduled:
+                break // Mixpanel only, Meta doesn't need these
+            }
+        }
+
+        // MARK: - Events (iOS-only, Django handles the rest)
+
+        enum Event: String {
+            case appOpened              = "app_opened"
+            case invoiceStarted        = "invoice_started"
+            case paywallShown          = "paywall_shown"
+            case notificationPermission = "notification_permission"
+            case notificationScheduled  = "notification_scheduled"
         }
     }
-
-    // MARK: - Event Definitions
-
-    enum Event: String {
-        case appOpened           = "app_opened"
-        case invoiceStarted      = "invoice_started"
-        case invoiceCompleted    = "invoice_completed"
-        case invoiceShared       = "invoice_shared"
-        case paywallShown        = "paywall_shown"
-        case subscriptionStarted = "subscription_started"
-        case notificationPermission = "notification_permission"
-        case notificationScheduled  = "notification_scheduled"
-    }
-}
