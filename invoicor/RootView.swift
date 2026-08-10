@@ -30,19 +30,6 @@ struct RootView: View {
                     } else {
                         MainTabView()
                             .transition(.opacity)
-                            .onAppear {
-                                // Request notification permission after user is fully set up
-                                // Delayed so it doesn't block any UI
-                                if !UserDefaults.standard.bool(forKey: "notifications_requested") {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                        UserDefaults.standard.set(true, forKey: "notifications_requested")
-                                        NotificationManager.shared.requestPermission()
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                            NotificationManager.shared.schedulePostRegistration()
-                                        }
-                                    }
-                                }
-                            }
                     }
                 case .error(let message):
                     VStack(spacing: 20) {
@@ -83,7 +70,6 @@ struct MainTabView: View {
     @State private var showReviewGate = false
 
     var body: some View {
-        let _ = print("DEBUG REVIEW: paid count = \(UserDefaults.standard.integer(forKey: "review_paid_invoice_count"))")
         TabView(selection: $selectedTab) {
             NavigationStack { HomeScreen() }
                 .tabItem { Image(systemName: "house.fill"); Text("Home") }

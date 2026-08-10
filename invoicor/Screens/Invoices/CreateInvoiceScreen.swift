@@ -591,7 +591,19 @@ struct CreateInvoiceScreen: View {
                 let result = try await APIClient.shared.request(
                     Invoice.self, method: "POST", path: "/invoices/", body: buildBody())
                 await MainActor.run {
-                    savedInvoiceId = result.publicId; isSaving = false; showPreview = true
+                    savedInvoiceId = result.publicId;
+                    isSaving = false;
+                    showPreview = true
+                }
+                if !UserDefaults.standard.bool(forKey: "notifications_requested") {
+                    print("DEBUG NOTIF: requested = \(UserDefaults.standard.bool(forKey: "notifications_requested"))")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        UserDefaults.standard.set(true, forKey: "notifications_requested")
+                        NotificationManager.shared.requestPermission()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            NotificationManager.shared.schedulePostRegistration()
+                        }
+                    }
                 }
             } catch let error as APIError {
                 if case .limitReached = error {
