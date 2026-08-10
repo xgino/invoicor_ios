@@ -45,9 +45,9 @@ struct CreateInvoiceScreen: View {
         }
         var saveButtonTitle: String {
             switch self {
-            case .create:    return "Preview Invoice"
+            case .create:    return "Preview & Save"
             case .edit:      return "Save Changes"
-            case .duplicate: return "Preview Invoice"
+            case .duplicate: return "Preview & Save"
             }
         }
     }
@@ -198,12 +198,6 @@ struct CreateInvoiceScreen: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { isPresented = false }
                 }
-                if mode == .create || mode == .duplicate {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(isFormValid ? "Save" : "Save Draft") { saveDraft() }
-                            .disabled(isSaving)
-                    }
-                }
             }
             .task { await loadFormData() }
             .sheet(isPresented: $showClientPicker) {
@@ -218,6 +212,12 @@ struct CreateInvoiceScreen: View {
             .navigationDestination(isPresented: $showPreview) {
                 if let invoiceId = savedInvoiceId {
                     InvoiceDetailScreen(invoiceId: invoiceId)
+                }
+            }
+            .onChange(of: showPreview) { oldValue, newValue in
+                // When user taps back from preview, close the entire create screen
+                if oldValue == true && newValue == false && savedInvoiceId != nil {
+                    isPresented = false
                 }
             }
             .fullScreenCover(isPresented: $showPaywall) { PaywallScreen() }
