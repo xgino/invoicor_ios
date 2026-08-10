@@ -202,6 +202,9 @@ struct BusinessProfileScreen: View {
     }
     private var invoiceDefaultsSection: some View {
         FormSection(title: "Invoice Defaults", footer: "Pre-filled each time you create a new invoice.") {
+            FormTappableRow(label: "Invoice Template",
+                displayText: templates.first(where: { $0.slug == defaultTemplate })?.name ?? defaultTemplate
+            ) { showTemplatePicker = true }
             FormPicker(label: "Default Currency",
                 displayText: currencies.first(where: { $0.code == defaultCurrency }).map { "\($0.symbol)  \($0.code) — \($0.name)" } ?? "Select currency",
                 items: currencies, itemLabel: { "\($0.symbol)  \($0.code) — \($0.name)" },
@@ -226,9 +229,6 @@ struct BusinessProfileScreen: View {
                 items: dateFormats.map { DateFormatItem(format: $0) }, itemLabel: { $0.format },
                 isSelected: { $0.format == defaultDateFormat }, onSelect: { defaultDateFormat = $0.format })
             StyledFormField("Default Due Days", text: $defaultDueDays, placeholder: "30", keyboard: .numberPad)
-            FormTappableRow(label: "Invoice Template",
-                displayText: templates.first(where: { $0.slug == defaultTemplate })?.name ?? defaultTemplate
-            ) { showTemplatePicker = true }
         }
     }
 
