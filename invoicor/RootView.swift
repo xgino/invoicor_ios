@@ -67,6 +67,7 @@ struct RootView: View {
 struct MainTabView: View {
     @State private var selectedTab = 0
     @State private var showCreate = false
+    @State private var showReviewGate = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -98,6 +99,14 @@ struct MainTabView: View {
         }
         .fullScreenCover(isPresented: $showCreate) {
             CreateInvoiceScreen(isPresented: $showCreate)
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: .showReviewGate
+        )) { _ in
+            showReviewGate = true
+        }
+        .sheet(isPresented: $showReviewGate) {
+            ReviewGateSheet()
         }
     }
 }
