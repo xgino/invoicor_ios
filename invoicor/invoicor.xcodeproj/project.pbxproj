@@ -19,6 +19,7 @@
 		33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA4D3001289800FC93E4 /* FacebookCore */; };
 		33CE22A73037338C00449917 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 33CE22A63037338C00449917 /* GoogleSignIn */; };
 		33CE22A93037338C00449917 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 33CE22A83037338C00449917 /* GoogleSignInSwift */; };
+		33CE22AC3037466100449917 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 33CE22AB3037466100449917 /* PostHog */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +69,7 @@
 				33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */,
 				338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */,
 				33CE22A93037338C00449917 /* GoogleSignInSwift in Frameworks */,
+				33CE22AC3037466100449917 /* PostHog in Frameworks */,
 				338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */,
 				33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */,
 				337EC7C4300E387200575809 /* GoMarketMe in Frameworks */,
@@ -144,6 +146,7 @@
 				337EC7C3300E387200575809 /* GoMarketMe */,
 				33CE22A63037338C00449917 /* GoogleSignIn */,
 				33CE22A83037338C00449917 /* GoogleSignInSwift */,
+				33CE22AB3037466100449917 /* PostHog */,
 			);
 			productName = invoicor;
 			productReference = 3355A62A2F7D684500945AED /* invoicor.app */;
@@ -179,6 +182,7 @@
 				33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 				337EC7C2300E387200575809 /* XCRemoteSwiftPackageReference "gomarketme-swift" */,
 				33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				33CE22AA3037466100449917 /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3355A62B2F7D684500945AED /* Products */;
@@ -365,7 +369,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -406,7 +410,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6.1;
+				MARKETING_VERSION = 1.6.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -487,6 +491,14 @@
 				minimumVersion = 9.2.0;
 			};
 		};
+		33CE22AA3037466100449917 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.69.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -524,6 +536,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		33CE22AB3037466100449917 /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33CE22AA3037466100449917 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

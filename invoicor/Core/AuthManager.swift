@@ -13,6 +13,7 @@
 import Foundation
 import Observation
 import RevenueCat
+import PostHog
 
 // MARK: - Auth State
 
@@ -266,6 +267,7 @@ final class AuthManager {
     // MARK: - Private: Local Cleanup
 
     private func performLogout() {
+        PostHogSDK.shared.reset()
         TokenStorage.clear()
         meResponse = nil
         state = .unauthenticated
@@ -275,6 +277,7 @@ final class AuthManager {
 
     /// Link RevenueCat to the Django user. Fire-and-forget.
     private func linkRevenueCat(userId: String) {
+        PostHogSDK.shared.identify(userId)
         Task.detached(priority: .utility) {
             do {
                 let (_, _) = try await Purchases.shared.logIn(userId)

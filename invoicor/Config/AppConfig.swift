@@ -66,6 +66,11 @@ enum AppConfig {
     
     /// Google iOS OAuth client ID (public — safe to ship, identifies the app).
     static let googleClientID = "708624999020-9fi7t2po7hsnvbfh9e5aal5ug8ctpmkd.apps.googleusercontent.com"
+    
+    /// Posthog
+    static let posthogAPIKey = "phc_Pc8MPW957gjYlwUzKVdGBfcWXc2k7Oy8aM7BHZsI0EV"
+    static let posthogHost = "https://us.i.posthog.com"
+    
 }
 
 
