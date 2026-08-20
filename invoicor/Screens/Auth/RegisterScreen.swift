@@ -1,5 +1,5 @@
 // Screens/Auth/RegisterScreen.swift
-// Registration: Apple Sign In + email/password.
+// Registration: Apple + Google Sign In + email (collapsed until tapped).
 
 import SwiftUI
 import AuthenticationServices
@@ -11,6 +11,7 @@ struct RegisterScreen: View {
     @State private var confirmPassword = ""
     @State private var isLoading = false
     @State private var errorMessage = ""
+    @State private var showEmailForm = false      // collapsed by default, like LoginScreen
 
     private var isValid: Bool {
         !email.isEmpty && password.count >= 8 && password == confirmPassword
@@ -38,9 +39,15 @@ struct RegisterScreen: View {
                 }
                 .padding(.bottom, 32)
 
-                // Apple Sign In
-                AppleSignInButton()
-                    .padding(.horizontal, 24)
+                // Apple + Google Sign In
+                VStack(spacing: 12) {
+                    AppleSignInButton()
+                    GoogleSignInButton(
+                        onSuccess: { dismiss() },
+                        onError: { msg in errorMessage = msg }
+                    )
+                }
+                .padding(.horizontal, 24)
 
                 // Divider
                 HStack {
@@ -50,27 +57,25 @@ struct RegisterScreen: View {
                 }
                 .padding(.horizontal, 24).padding(.vertical, 20)
 
-                // Email form
-                VStack(spacing: 14) {
-                    StyledFormField("Email", text: $email, placeholder: "you@email.com", keyboard: .emailAddress, autocap: .never)
-                    SecureFormField(label: "Password", text: $password, placeholder: "Minimum 8 characters")
-                    SecureFormField(label: "Confirm Password", text: $confirmPassword, placeholder: "Re-enter password")
-
-                    if passwordMismatch {
-                        hint(icon: "exclamationmark.circle", text: "Passwords don't match", color: .red)
-                    } else if !password.isEmpty && password.count < 8 {
-                        hint(icon: "info.circle", text: "At least 8 characters", color: .secondary)
+                // Email — collapsed behind a button until tapped
+                if showEmailForm {
+                    emailForm
+                } else {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.25)) { showEmailForm = true }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "envelope.fill").font(.body)
+                            Text("Continue with Email").font(.body.weight(.medium))
+                        }
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-
-                    if !errorMessage.isEmpty {
-                        hint(icon: "exclamationmark.circle", text: errorMessage, color: .red)
-                    }
-
-                    ButtonPrimary(title: "Create Account", isLoading: isLoading, isDisabled: !isValid) {
-                        doRegister()
-                    }
+                    .padding(.horizontal, 24)
                 }
-                .padding(.horizontal, 24)
 
                 Spacer()
 
@@ -89,6 +94,30 @@ struct RegisterScreen: View {
                 }
             }
         }
+    }
+
+    private var emailForm: some View {
+        VStack(spacing: 14) {
+            StyledFormField("Email", text: $email, placeholder: "you@email.com", keyboard: .emailAddress, autocap: .never)
+            SecureFormField(label: "Password", text: $password, placeholder: "Minimum 8 characters")
+            SecureFormField(label: "Confirm Password", text: $confirmPassword, placeholder: "Re-enter password")
+
+            if passwordMismatch {
+                hint(icon: "exclamationmark.circle", text: "Passwords don't match", color: .red)
+            } else if !password.isEmpty && password.count < 8 {
+                hint(icon: "info.circle", text: "At least 8 characters", color: .secondary)
+            }
+
+            if !errorMessage.isEmpty {
+                hint(icon: "exclamationmark.circle", text: errorMessage, color: .red)
+            }
+
+            ButtonPrimary(title: "Create Account", isLoading: isLoading, isDisabled: !isValid) {
+                doRegister()
+            }
+        }
+        .padding(.horizontal, 24)
+        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     private func hint(icon: String, text: String, color: Color) -> some View {

@@ -64,6 +64,8 @@ enum AppConfig {
     // MARK: - GoMarketMe Affiliate
     static let goMarketMeApiKey = "0Xe8B4BrqH2pDCyRdPUXP8kkOg4zOWsB8YKW5tlO"
     
+    /// Google iOS OAuth client ID (public — safe to ship, identifies the app).
+    static let googleClientID = "708624999020-9fi7t2po7hsnvbfh9e5aal5ug8ctpmkd.apps.googleusercontent.com"
 }
 
 

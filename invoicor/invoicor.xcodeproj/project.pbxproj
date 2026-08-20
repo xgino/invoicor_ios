@@ -17,6 +17,8 @@
 		338A2B092F88F01E00745D25 /* SubscriptionKey_22F4BA53.h8 in Resources */ = {isa = PBXBuildFile; fileRef = 338A2B082F88F01800745D25 /* SubscriptionKey_22F4BA53.h8 */; };
 		33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA473000022400FC93E4 /* Mixpanel */; };
 		33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = 33C7AA4D3001289800FC93E4 /* FacebookCore */; };
+		33CE22A73037338C00449917 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 33CE22A63037338C00449917 /* GoogleSignIn */; };
+		33CE22A93037338C00449917 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 33CE22A83037338C00449917 /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,9 +67,11 @@
 			files = (
 				33C7AA483000022400FC93E4 /* Mixpanel in Frameworks */,
 				338A2AF82F86A3A500745D25 /* RevenueCatUI in Frameworks */,
+				33CE22A93037338C00449917 /* GoogleSignInSwift in Frameworks */,
 				338A2AF62F86A3A500745D25 /* RevenueCat in Frameworks */,
 				33C7AA4E3001289800FC93E4 /* FacebookCore in Frameworks */,
 				337EC7C4300E387200575809 /* GoMarketMe in Frameworks */,
+				33CE22A73037338C00449917 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,6 +142,8 @@
 				33C7AA473000022400FC93E4 /* Mixpanel */,
 				33C7AA4D3001289800FC93E4 /* FacebookCore */,
 				337EC7C3300E387200575809 /* GoMarketMe */,
+				33CE22A63037338C00449917 /* GoogleSignIn */,
+				33CE22A83037338C00449917 /* GoogleSignInSwift */,
 			);
 			productName = invoicor;
 			productReference = 3355A62A2F7D684500945AED /* invoicor.app */;
@@ -172,6 +178,7 @@
 				33C7AA463000022400FC93E4 /* XCRemoteSwiftPackageReference "mixpanel-swift" */,
 				33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
 				337EC7C2300E387200575809 /* XCRemoteSwiftPackageReference "gomarketme-swift" */,
+				33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 3355A62B2F7D684500945AED /* Products */;
@@ -358,7 +365,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.6.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -399,7 +406,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.6.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.invoicor.invoicor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -472,6 +479,14 @@
 				kind = branch;
 			};
 		};
+		33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.2.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -499,6 +514,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 33C7AA4C3001289800FC93E4 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
 			productName = FacebookCore;
+		};
+		33CE22A63037338C00449917 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		33CE22A83037338C00449917 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 33CE22A53037338C00449917 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

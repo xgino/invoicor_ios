@@ -1,10 +1,13 @@
 // Screens/Auth/LoginScreen.swift
-// Auth screen: Apple Sign In + email/password.
+// Auth screen: Apple + Google Sign In + email/password.
 //
 // App icon: Add your icon to Assets.xcassets as "AppLogo" image set.
+// GoogleSignInButton lives at the bottom of this file (like AppleSignInButton),
+// so both LoginScreen and RegisterScreen can use it.
 
 import SwiftUI
 import AuthenticationServices
+import GoogleSignIn
 
 struct LoginScreen: View {
     @State private var email = ""
@@ -32,9 +35,12 @@ struct LoginScreen: View {
             }
             .padding(.bottom, 40)
 
-            // Apple Sign In
+            // Apple + Google Sign In
             VStack(spacing: 12) {
                 AppleSignInButton()
+                GoogleSignInButton(
+                    onError: { msg in errorMessage = msg }
+                )
             }
             .padding(.horizontal, 24)
 
@@ -113,7 +119,7 @@ struct LoginScreen: View {
 
 struct AppleSignInButton: View {
     private let delegate = AppleSignInDelegate()
-    
+
     var body: some View {
         Button {
             delegate.startSignIn()
@@ -193,5 +199,139 @@ class AppleSignInDelegate: NSObject,
             print("❌ Apple auth error: \(error)")
             #endif
         }
+    }
+}
+
+// MARK: - Google Sign In
+// Lives here next to Apple. Global struct, so RegisterScreen can use it too.
+// Draws the real 4-color Google "G" (or uses a "GoogleLogo" asset if present).
+
+struct GoogleSignInButton: View {
+    /// Optional: called after a successful sign-in (e.g. to dismiss a sheet).
+    var onSuccess: (() -> Void)? = nil
+    /// Optional: surface an error message back to the parent screen.
+    var onError: ((String) -> Void)? = nil
+
+    var body: some View {
+        Button {
+            startGoogleSignIn()
+        } label: {
+            HStack(spacing: 12) {
+                // Pulls the image straight from a public icon server
+                AsyncImage(url: URL(string: "https://img.icons8.com/color/48/google-logo.png")) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                } placeholder: {
+                    Color.clear // Shows nothing while loading for a millisecond
+                }
+                .frame(width: 18, height: 18)
+                
+                Text("Continue with Google")
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(Color(.label))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color(.systemBackground))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.systemGray3), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+
+    private func startGoogleSignIn() {
+        guard let root = topViewController() else { return }
+
+        GIDSignIn.sharedInstance.signIn(withPresenting: root) { result, error in
+            if let error = error {
+                let code = (error as NSError).code
+                if code != -5 { // -5 = user cancelled; ignore quietly
+                    #if DEBUG
+                    print("❌ Google Sign In error: \(error)")
+                    #endif
+                    onError?("Google sign in failed")
+                }
+                return
+            }
+
+            guard let user = result?.user,
+                  let idToken = user.idToken?.tokenString else {
+                onError?("Google sign in failed")
+                return
+            }
+
+            let name = [user.profile?.givenName, user.profile?.familyName]
+                .compactMap { $0 }.joined(separator: " ")
+            let email = user.profile?.email
+
+            Task {
+                do {
+                    try await AuthManager.shared.loginWithGoogle(
+                        identityToken: idToken,
+                        fullName: name.isEmpty ? nil : name,
+                        email: email
+                    )
+                    await MainActor.run { onSuccess?() }
+                } catch {
+                    await MainActor.run {
+                        onError?((error as? APIError)?.errorDescription ?? "Google sign in failed")
+                    }
+                }
+            }
+        }
+    }
+
+    private func topViewController() -> UIViewController? {
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        var top = scene?.windows.first(where: { $0.isKeyWindow })?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
+    }
+}
+
+// MARK: - Google "G" logo drawn with SwiftUI (brand colors)
+
+struct GoogleGLogo: View {
+    var body: some View {
+        GeometryReader { geo in
+            let s = min(geo.size.width, geo.size.height)
+            let lw = s * 0.22
+            ZStack {
+                GoogleArc(start: -20, end: 90)
+                    .stroke(Color(red: 0.20, green: 0.66, blue: 0.33), style: .init(lineWidth: lw)) // green
+                GoogleArc(start: 90, end: 180)
+                    .stroke(Color(red: 0.98, green: 0.74, blue: 0.02), style: .init(lineWidth: lw)) // yellow
+                GoogleArc(start: 180, end: 270)
+                    .stroke(Color(red: 0.92, green: 0.26, blue: 0.21), style: .init(lineWidth: lw)) // red
+                GoogleArc(start: 270, end: 340)
+                    .stroke(Color(red: 0.26, green: 0.52, blue: 0.96), style: .init(lineWidth: lw)) // blue
+                Rectangle()
+                    .fill(Color(red: 0.26, green: 0.52, blue: 0.96))
+                    .frame(width: s * 0.42, height: lw)
+                    .offset(x: s * 0.20, y: 0)
+            }
+        }
+    }
+}
+
+private struct GoogleArc: Shape {
+    let start: Double
+    let end: Double
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let r = (min(rect.width, rect.height) / 2) - (min(rect.width, rect.height) * 0.11)
+        p.addArc(
+            center: CGPoint(x: rect.midX, y: rect.midY),
+            radius: r,
+            startAngle: .degrees(start),
+            endAngle: .degrees(end),
+            clockwise: false
+        )
+        return p
     }
 }

@@ -177,13 +177,16 @@ final class AuthManager {
     // MARK: - Google Sign In (placeholder)
 
     /// Authenticate with Google ID token.
-    /// Same pattern as Apple — backend verifies, creates/links account, returns JWTs.
-    func loginWithGoogle(idToken: String) async throws {
+    func loginWithGoogle(identityToken: String, fullName: String?, email: String?) async throws {
+        var body: [String: Any] = ["identity_token": identityToken]
+        if let name = fullName { body["full_name"] = name }
+        if let email = email { body["email"] = email }
+
         let tokens = try await APIClient.shared.request(
             LoginResponse.self,
             method: "POST",
             path: "/accounts/auth/google/",
-            body: ["id_token": idToken],
+            body: body,
             auth: false
         )
         TokenStorage.accessToken = tokens.access
