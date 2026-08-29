@@ -50,7 +50,12 @@ struct SettingsScreen: View {
         // This keeps users in the app and allows us to refresh the tier immediately.
         .offerCodeRedemption(isPresented: $showRedeemSheet) { result in
             if case .success = result {
-                Task { await auth.refreshMe() }
+                Task {
+                    // Wait for RevenueCat webhook to reach our API
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    await auth.syncSubscriptionFromRevenueCat()
+                    await auth.refreshMe()
+                }
             }
         }
         .alert("Log Out?", isPresented: $showLogoutConfirm) {
@@ -322,7 +327,10 @@ struct SettingsScreen: View {
 
     private var planName: String {
         switch auth.currentUser?.tier ?? "free" {
-        case "free": return "Free Plan"; case "pro": return "Pro Plan"
+        case "free": return "Free Plan"
+        case "starter": return "Starter Plan"
+        case "pro": return "Pro Plan"
+        case "business": return "Business Plan"
         default: return "Free Plan"
         }
     }

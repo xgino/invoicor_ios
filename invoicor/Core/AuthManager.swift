@@ -88,6 +88,13 @@ final class AuthManager {
             
             state = .authenticated
             linkRevenueCat(userId: me.user.publicId)
+            
+            // Sync subscription in case webhook was missed
+            Task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await syncSubscriptionFromRevenueCat()
+            }
+            
         } catch let error as APIError {
             switch error {
             case .unauthorized:
@@ -227,6 +234,57 @@ final class AuthManager {
         }
     }
 
+    // MARK: - Sync Subscription from RevenueCat
+    /// Checks RevenueCat for active subscription and syncs tier to API.
+    /// Handles: code redemption, restore purchases, trial conversion.
+    func syncSubscriptionFromRevenueCat() async {
+        do {
+            let customerInfo = try await Purchases.shared.customerInfo()
+            
+            // Check all active subscriptions
+            let activeProducts = customerInfo.activeSubscriptions
+            
+            guard let productId = activeProducts.first else {
+                #if DEBUG
+                print("⚠️ [RC Sync] No active subscriptions")
+                #endif
+                return
+            }
+            
+            // Map product to tier (same mapping as Django webhook)
+            let tierMap: [String: String] = [
+                "starter_monthly": "starter",
+                "starter_yearly": "starter",
+                "pro_monthly": "pro",
+                "pro_yearly": "pro",
+            ]
+            
+            guard let newTier = tierMap[productId] else {
+                #if DEBUG
+                print("⚠️ [RC Sync] Unknown product: \(productId)")
+                #endif
+                return
+            }
+            
+            // Only sync if tier is different from what API knows
+            if currentUser?.tier != newTier {
+                let _ = try await APIClient.shared.request(
+                    [String: String].self,
+                    method: "POST",
+                    path: "/subscriptions/sync/",
+                    body: ["product_id": productId]
+                )
+                #if DEBUG
+                print("✅ [RC Sync] Synced tier to: \(newTier)")
+                #endif
+            }
+        } catch {
+            #if DEBUG
+            print("⚠️ [RC Sync] Error: \(error)")
+            #endif
+        }
+    }
+    
     // MARK: - Refresh User Data
 
     /// Re-fetch /me after profile updates, invoice creation, purchases, etc.
