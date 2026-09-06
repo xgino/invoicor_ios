@@ -280,6 +280,7 @@ struct Invoice: Codable, Identifiable, Equatable, Hashable, Sendable {
     let paymentTerms: String
     let dateFormat: String
     let notes: String
+    let paymentUrl: String?
     let senderSnapshot: [String: JSONValue]
     let clientSnapshot: [String: JSONValue]
     let discountType: String

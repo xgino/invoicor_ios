@@ -67,6 +67,7 @@ struct CreateInvoiceScreen: View {
     @State private var discountType = "none"
     @State private var discountValue = ""
     @State private var notes = ""
+    @State private var paymentUrl = ""
 
     // Business profile
     @State private var businessProfiles: [BusinessProfile] = []
@@ -439,6 +440,7 @@ struct CreateInvoiceScreen: View {
     private var notesSection: some View {
         FormSection(title: "Notes") {
             FormTextEditor(label: "", text: $notes, placeholder: "Payment instructions, thank you message…", minHeight: 80)
+            StyledFormField("Payment Link (optional)", text: $paymentUrl, placeholder: "https://")
         }
     }
 
@@ -507,7 +509,7 @@ struct CreateInvoiceScreen: View {
     private func prefillFromInvoice(_ inv: Invoice) {
         currency = inv.currency; language = inv.language
         templateSlug = inv.templateSlug; paymentTerms = inv.paymentTerms
-        notes = inv.notes; taxRate = inv.taxRate; taxInclusive = inv.taxInclusive
+        notes = inv.notes; paymentUrl = inv.paymentUrl ?? ""; taxRate = inv.taxRate; taxInclusive = inv.taxInclusive
         discountType = inv.discountType; discountValue = inv.discountValue
 
         let df = DateFormatter(); df.dateFormat = "yyyy-MM-dd"
@@ -538,7 +540,7 @@ struct CreateInvoiceScreen: View {
             "template_slug": templateSlug, "language": language, "currency": currency,
             "issue_date": dateFormatter.string(from: issueDate),
             "due_date": dateFormatter.string(from: dueDate),
-            "payment_terms": paymentTerms, "notes": notes,
+            "payment_terms": paymentTerms, "notes": notes, "payment_url": paymentUrl,
             "tax_rate": taxRate.isEmpty ? "0" : taxRate,
             "tax_inclusive": taxInclusive,
             "discount_type": discountType,
