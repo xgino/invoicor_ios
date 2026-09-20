@@ -1,13 +1,13 @@
 {
-  "originHash" : "43624a3e3662dc40f64bf1e17abdb9c1994f48f0c16f4d63883d44eea44af155",
+  "originHash" : "ee3b463dff4ccce7ee946793e1528c15b8b6d965fbdde3b38925e43a8b7caace",
   "pins" : [
     {
       "identity" : "app-check",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/app-check.git",
       "state" : {
-        "revision" : "3e33dd27dd4c69bd81c7c81fe61d8ccf58846902",
-        "version" : "11.3.1"
+        "revision" : "97f7d74dd0e8f3d0fe5fc75cc8957aa73bdc948a",
+        "version" : "11.3.2"
       }
     },
     {
@@ -25,7 +25,7 @@
       "location" : "https://github.com/facebook/facebook-ios-sdk",
       "state" : {
         "branch" : "main",
-        "revision" : "c00e9e0e86f0d6a89cb069f09a882d8ab3099744"
+        "revision" : "2328d70717c6354e1e0654302e612f9d0a12fec4"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleUtilities.git",
       "state" : {
-        "revision" : "9f183ae842be978784f2963a343682e0c46d8fb3",
-        "version" : "8.1.2"
+        "revision" : "92c8f6dc3ac375d6febdfcb3db68bc3d10633db3",
+        "version" : "8.1.3"
       }
     },
     {
@@ -96,8 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mixpanel/mixpanel-swift",
       "state" : {
-        "revision" : "3a12d5057c8701d39e3559141aa9f433bea4ff7b",
-        "version" : "6.5.0"
+        "revision" : "11742eda8659fdf73423a561e9308127b00f3605",
+        "version" : "6.7.0"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mixpanel/mixpanel-swift-common.git",
       "state" : {
-        "revision" : "ffd168d972a1bea7e86104f253a3e105c69217e5",
-        "version" : "1.0.1"
+        "revision" : "72626df0ef90df6a27c2c3624197b70dbcc618ed",
+        "version" : "1.1.0"
       }
     },
     {
@@ -114,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/PostHog/posthog-ios.git",
       "state" : {
-        "revision" : "2f8002409e7c8c8b1f14e3ce716f543831fd941d",
-        "version" : "3.69.8"
+        "revision" : "e30646f39a30ba6758cb9ad8bf94d462383ffc2a",
+        "version" : "3.79.0"
       }
     },
     {
@@ -132,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RevenueCat/purchases-ios.git",
       "state" : {
-        "revision" : "66f81c19e29170cecc1f155c62cd586cf53b8400",
-        "version" : "5.67.1"
+        "revision" : "4faa17c4a290954fbdbf8f8a6bf0f58e48a8256c",
+        "version" : "5.90.2"
       }
     }
   ],

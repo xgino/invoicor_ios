@@ -2,12 +2,16 @@
 // Onboarding removed — goes straight to dashboard after login.
 // Business profile editing happens in Settings.
 import SwiftUI
+import RevenueCat
+import RevenueCatUI
 
 struct RootView: View {
     var auth = AuthManager.shared
     var onboarding = OnboardingManager.shared
     @State private var splashDone = false
-
+    @State private var trialOfferSeen = false
+    @State private var showTrialOffer = false
+    
     var body: some View {
         Group {
             if !splashDone {
@@ -27,6 +31,12 @@ struct RootView: View {
                     if !auth.hasBusinessProfile {
                         BusinessWizard()
                             .transition(.opacity)
+                    } else if !trialOfferSeen && !UserDefaults.standard.bool(forKey: "seen_trial_offer") {
+                        OnboardingPaywallFlow(onFinish: {
+                            UserDefaults.standard.set(true, forKey: "seen_trial_offer")
+                            trialOfferSeen = true
+                        })
+                        .transition(.opacity)
                     } else {
                         MainTabView()
                             .transition(.opacity)
@@ -107,6 +117,71 @@ struct MainTabView: View {
         }
         .sheet(isPresented: $showReviewGate) {
             ReviewGateSheet()
+        }
+    }
+}
+
+// Onboarding Paywall Flow
+private struct OnboardingPaywallFlow: View {
+    let onFinish: () -> Void
+    @State private var paywallDismissed = false
+    @State private var offering: Offering? = nil
+
+    var body: some View {
+        if paywallDismissed {
+            VStack(spacing: 24) {
+                Spacer()
+                Image(systemName: "gift.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(.orange)
+                Text("3 invoices on us")
+                    .font(.system(size: 28, weight: .bold))
+                Text("Try it out for free. Send real invoices,\nget paid first. Then decide.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Spacer()
+                Button { onFinish() } label: {
+                    Text("Send my first invoice")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 17)
+                        .background(LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 48)
+            }
+        } else if let offering {
+            NavigationStack {
+                PaywallView(offering: offering, displayCloseButton: false)
+                    .onPurchaseCompleted { _ in
+                        Task { await AuthManager.shared.refreshMe() }
+                        onFinish()
+                    }
+                    .onRestoreCompleted { _ in
+                        Task { await AuthManager.shared.refreshMe() }
+                        onFinish()
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        Button { withAnimation { paywallDismissed = true } } label: {
+                            Image(systemName: "xmark")
+                                .font(.body.weight(.bold))
+                                .foregroundStyle(.secondary)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                        }
+                        .padding(.top, 10)
+                        .padding(.trailing, 10)
+                    }
+            }
+        } else {
+            ProgressView().task {
+                let offerings = try? await Purchases.shared.offerings()
+                offering = offerings?.offering(identifier: "onboarding_trail") ?? offerings?.current
+            }
         }
     }
 }
